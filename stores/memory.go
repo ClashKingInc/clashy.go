@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"clashy.go/events"
+	"github.com/clashkinginc/clashy.go/events"
 )
 
 type MemoryStore struct {

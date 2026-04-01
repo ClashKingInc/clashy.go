@@ -3,7 +3,7 @@ package events
 import (
 	"context"
 
-	clashy "clashy.go"
+	clashy "github.com/clashkinginc/clashy.go"
 )
 
 type Engine struct {

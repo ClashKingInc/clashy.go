@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	clashy "clashy.go"
+	clashy "github.com/clashkinginc/clashy.go"
 )
 
 func ClanMemberJoined(fn Handler[clashy.Clan]) Spec[clashy.Clan] {

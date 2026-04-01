@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"clashy.go/events"
+	"github.com/clashkinginc/clashy.go/events"
 )
 
 type MongoDocumentStore interface {

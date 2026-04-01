@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	clashy "clashy.go"
-	"clashy.go/events"
-	"clashy.go/stores"
+	clashy "github.com/clashkinginc/clashy.go"
+	"github.com/clashkinginc/clashy.go/events"
+	"github.com/clashkinginc/clashy.go/stores"
 )
 
 func TestTrackerDispatchesOnChange(t *testing.T) {

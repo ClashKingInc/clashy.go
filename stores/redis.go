@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"clashy.go/events"
+	"github.com/clashkinginc/clashy.go/events"
 )
 
 type RedisKVClient interface {

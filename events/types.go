@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	clashy "clashy.go"
+	clashy "github.com/clashkinginc/clashy.go"
 )
 
 var ErrSnapshotNotFound = errors.New("snapshot not found")

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	clashy "clashy.go"
+	clashy "github.com/clashkinginc/clashy.go"
 )
 
 const defaultMockAPIBaseURL = "https://api.clashapi.dev"
