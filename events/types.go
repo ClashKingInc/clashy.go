@@ -211,7 +211,7 @@ func defaultErrorHandler(ctx context.Context, ec ErrorContext) ErrorDecision {
 type GroupConfig struct {
 	Name             string
 	Interval         time.Duration
-	Workers          int
+	RateLimit        int
 	Store            SnapshotStore
 	TagSource        TagSource
 	CompareSnapshots bool
@@ -222,7 +222,6 @@ func defaultGroupConfig(name string) GroupConfig {
 	return GroupConfig{
 		Name:             name,
 		Interval:         30 * time.Second,
-		Workers:          8,
 		TagSource:        Tags(),
 		CompareSnapshots: true,
 		ErrorHandler:     defaultErrorHandler,
@@ -235,10 +234,10 @@ func Interval(interval time.Duration) GroupOption {
 	return func(cfg *GroupConfig) { cfg.Interval = interval }
 }
 
-func Workers(workers int) GroupOption {
+func RateLimit(limit int) GroupOption {
 	return func(cfg *GroupConfig) {
-		if workers > 0 {
-			cfg.Workers = workers
+		if limit >= 0 {
+			cfg.RateLimit = limit
 		}
 	}
 }
@@ -347,8 +346,9 @@ func (t *Tracker[T]) Start(ctx context.Context) error {
 }
 
 func (t *Tracker[T]) runGroup(ctx context.Context, group GroupConfig) {
+	limiter := newGroupLimiter(group.RateLimit)
 	for {
-		delay, stop := t.runGroupOnce(ctx, group)
+		delay, stop := t.runGroupOnce(ctx, group, limiter)
 		if stop {
 			return
 		}
@@ -368,25 +368,20 @@ func (t *Tracker[T]) runGroup(ctx context.Context, group GroupConfig) {
 	}
 }
 
-func (t *Tracker[T]) runGroupOnce(ctx context.Context, group GroupConfig) (time.Duration, bool) {
+func (t *Tracker[T]) runGroupOnce(ctx context.Context, group GroupConfig, limiter *groupLimiter) (time.Duration, bool) {
 	if group.TagSource == nil || (group.CompareSnapshots && group.Store == nil) {
 		return group.Interval, false
 	}
-	sem := make(chan struct{}, group.Workers)
 	var wg sync.WaitGroup
 	var pauseFor time.Duration
 	var shouldStop bool
 	var actionMu sync.Mutex
 	_ = group.TagSource.ForEach(ctx, func(tag string) error {
 		tag = clashy.CorrectTag(tag)
-		sem <- struct{}{}
 		wg.Add(1)
 		go func(tag string) {
-			defer func() {
-				<-sem
-				wg.Done()
-			}()
-			decision := t.processTag(ctx, group, tag)
+			defer wg.Done()
+			decision := t.processTag(ctx, group, tag, limiter)
 			actionMu.Lock()
 			defer actionMu.Unlock()
 			if decision.PauseFor > pauseFor {
@@ -406,10 +401,19 @@ func (t *Tracker[T]) runGroupOnce(ctx context.Context, group GroupConfig) (time.
 	return group.Interval, shouldStop
 }
 
-func (t *Tracker[T]) processTag(ctx context.Context, group GroupConfig, tag string) ErrorDecision {
+func (t *Tracker[T]) processTag(ctx context.Context, group GroupConfig, tag string, limiter *groupLimiter) ErrorDecision {
 	lock := t.tagLease(tag)
 	lock.Lock()
 	defer lock.Unlock()
+
+	if limiter != nil {
+		release, err := limiter.Acquire(ctx)
+		if err != nil {
+			return ErrorDecision{Action: ErrorActionSkip}
+		}
+		defer release()
+		ctx = clashy.WithoutRateLimit(ctx)
+	}
 
 	current, retry, err := t.fetch(ctx, tag)
 	if err != nil || current == nil {
@@ -551,4 +555,33 @@ func (t *Tracker[T]) handleError(ctx context.Context, group GroupConfig, tag str
 		Err:   err,
 		Store: group.Store,
 	})
+}
+
+type groupLimiter struct {
+	slots chan struct{}
+}
+
+func newGroupLimiter(limit int) *groupLimiter {
+	if limit <= 0 {
+		return nil
+	}
+	return &groupLimiter{slots: make(chan struct{}, limit)}
+}
+
+func (l *groupLimiter) Acquire(ctx context.Context) (func(), error) {
+	if l == nil {
+		return func() {}, nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	select {
+	case l.slots <- struct{}{}:
+		return func() {
+			<-l.slots
+		}, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }

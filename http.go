@@ -23,6 +23,7 @@ type cachedResponse struct {
 type HTTPClient struct {
 	config ClientConfig
 	client *http.Client
+	limit  *requestLimiter
 
 	mu    sync.RWMutex
 	cache map[string]cachedResponse
@@ -34,6 +35,7 @@ func NewHTTPClient(cfg ClientConfig) *HTTPClient {
 	return &HTTPClient{
 		config: cfg,
 		client: &http.Client{Timeout: cfg.Timeout},
+		limit:  newRequestLimiter(cfg.ThrottleLimit),
 		cache:  make(map[string]cachedResponse),
 	}
 }
@@ -65,6 +67,13 @@ func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, o
 		if ok && time.Now().Before(cached.ExpiresAt) {
 			return append([]byte(nil), cached.Body...), cached.Status, int(time.Until(cached.ExpiresAt).Seconds()), nil
 		}
+	}
+	if !rateLimitDisabled(ctx) {
+		release, err := h.limit.Acquire(ctx)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		defer release()
 	}
 
 	var reader io.Reader

@@ -3,6 +3,8 @@ package events_test
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -281,5 +283,123 @@ func TestTrackerOnErrorCanDeferToDefaultMaintenancePause(t *testing.T) {
 
 	if fetches.Load() > 1 {
 		t.Fatalf("expected maintenance to pause the group via default fallback, got %d fetches", fetches.Load())
+	}
+}
+
+func TestTrackerGroupRateLimitOverridesClientLimit(t *testing.T) {
+	runTracker := func(t *testing.T, customRateLimit int) int32 {
+		t.Helper()
+
+		var requests atomic.Int32
+		var inFlight atomic.Int32
+		var maxInFlight atomic.Int32
+		done := make(chan struct{})
+		release := make(chan struct{})
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			current := inFlight.Add(1)
+			setMax(&maxInFlight, current)
+			defer inFlight.Add(-1)
+
+			<-release
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"tag":"#2PP","name":"Player"}`))
+			if requests.Add(1) == 2 {
+				close(done)
+			}
+		}))
+		defer server.Close()
+
+		cfg := clashy.DefaultClientConfig()
+		cfg.BaseURL = server.URL
+		cfg.LookupCache = false
+		cfg.UpdateCache = false
+		cfg.ThrottleLimit = 1
+
+		client, err := clashy.NewClient(cfg)
+		if err != nil {
+			t.Fatalf("new client: %v", err)
+		}
+		if err := client.LoginWithTokens(context.Background(), "token"); err != nil {
+			t.Fatalf("login with tokens: %v", err)
+		}
+
+		tracker := events.NewTracker("player", client, func(ctx context.Context, tag string) (*clashy.Player, int, error) {
+			player, err := client.GetPlayer(ctx, tag)
+			retry := 0
+			if player != nil {
+				retry = player.RetryAfter()
+			}
+			return player, retry, err
+		}, nil)
+
+		options := []events.GroupOption{
+			events.GroupTags("#2PP", "#2PQ"),
+			events.Interval(time.Hour),
+			events.PollOnly(),
+		}
+		if customRateLimit > 0 {
+			options = append(options, events.RateLimit(customRateLimit))
+		}
+		tracker.Group("tracked", options...)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		if err := tracker.Start(ctx); err != nil {
+			t.Fatalf("start tracker: %v", err)
+		}
+
+		wantStarted := int32(1)
+		if customRateLimit > 0 {
+			wantStarted = 2
+		}
+		waitForCount(t, &inFlight, wantStarted, 500*time.Millisecond)
+		if got := maxInFlight.Load(); got != wantStarted {
+			t.Fatalf("expected %d in-flight requests, got %d", wantStarted, got)
+		}
+
+		close(release)
+		select {
+		case <-done:
+		case <-time.After(3 * time.Second):
+			t.Fatalf("timed out waiting for tracker requests")
+		}
+		cancel()
+		return maxInFlight.Load()
+	}
+
+	sharedMax := runTracker(t, 0)
+	customMax := runTracker(t, 20)
+
+	if sharedMax != 1 {
+		t.Fatalf("expected shared group to use client concurrency limit, got %d", sharedMax)
+	}
+	if customMax != 2 {
+		t.Fatalf("expected custom group to bypass client limit and use its own concurrency limit, got %d", customMax)
+	}
+}
+
+func waitForCount(t *testing.T, counter *atomic.Int32, want int32, timeout time.Duration) {
+	t.Helper()
+
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if counter.Load() >= want {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatalf("timed out waiting for count %d, got %d", want, counter.Load())
+}
+
+func setMax(dst *atomic.Int32, current int32) {
+	for {
+		max := dst.Load()
+		if current <= max {
+			return
+		}
+		if dst.CompareAndSwap(max, current) {
+			return
+		}
 	}
 }
