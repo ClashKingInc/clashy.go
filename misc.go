@@ -80,12 +80,14 @@ type Location struct {
 	IsCountry   bool   `json:"isCountry"`
 	CountryCode string `json:"countryCode"`
 	Localised   string `json:"localizedName"`
+	responseMeta
 }
 
 type BaseLeague struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 	Icon *Icon  `json:"iconUrls"`
+	responseMeta
 }
 
 type League = BaseLeague
@@ -108,6 +110,7 @@ type Label struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 	Icon *Icon  `json:"iconUrls"`
+	responseMeta
 }
 
 type CapitalDistrict struct {
@@ -128,6 +131,7 @@ type ChatLanguage struct {
 type GoldPassSeason struct {
 	StartTime *Timestamp `json:"startTime"`
 	EndTime   *Timestamp `json:"endTime"`
+	responseMeta
 }
 
 type PlayerHouseElement struct {

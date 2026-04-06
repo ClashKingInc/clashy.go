@@ -24,6 +24,12 @@ type responseMeta struct {
 }
 
 func (m responseMeta) RetryAfter() int { return m.ResponseRetry }
+func (m *responseMeta) setResponseMeta(meta responseMeta) {
+	if m == nil {
+		return
+	}
+	*m = meta
+}
 
 func setRawJSON(target any, raw []byte, retry int) {
 	if target == nil {
@@ -33,15 +39,64 @@ func setRawJSON(target any, raw []byte, retry int) {
 	if value.Kind() != reflect.Pointer || value.IsNil() {
 		return
 	}
-	elem := value.Elem()
-	field := elem.FieldByName("responseMeta")
-	if !field.IsValid() || !field.CanSet() {
-		return
-	}
-	field.Set(reflect.ValueOf(responseMeta{
+	meta := responseMeta{
 		ResponseRetry: retry,
 		Raw:           append(json.RawMessage(nil), raw...),
-	}))
+	}
+	setRawJSONValue(value, meta)
+}
+
+func setRawJSONValue(value reflect.Value, meta responseMeta) {
+	if !value.IsValid() {
+		return
+	}
+	if value.Kind() == reflect.Pointer {
+		if value.IsNil() {
+			return
+		}
+		if value.CanInterface() {
+			if setter, ok := value.Interface().(interface{ setResponseMeta(responseMeta) }); ok {
+				setter.setResponseMeta(responseMeta{
+					ResponseRetry: meta.ResponseRetry,
+					Raw:           append(json.RawMessage(nil), meta.Raw...),
+				})
+			}
+		}
+		setRawJSONValue(value.Elem(), meta)
+		return
+	}
+
+	switch value.Kind() {
+	case reflect.Struct:
+		if value.CanAddr() {
+			addr := value.Addr()
+			if addr.CanInterface() {
+				if setter, ok := addr.Interface().(interface{ setResponseMeta(responseMeta) }); ok {
+					setter.setResponseMeta(responseMeta{
+						ResponseRetry: meta.ResponseRetry,
+						Raw:           append(json.RawMessage(nil), meta.Raw...),
+					})
+				}
+			}
+		}
+		for i := 0; i < value.NumField(); i++ {
+			fieldValue := value.Field(i)
+			if fieldValue.CanAddr() {
+				setRawJSONValue(fieldValue.Addr(), meta)
+				continue
+			}
+			setRawJSONValue(fieldValue, meta)
+		}
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < value.Len(); i++ {
+			item := value.Index(i)
+			if item.CanAddr() {
+				setRawJSONValue(item.Addr(), meta)
+				continue
+			}
+			setRawJSONValue(item, meta)
+		}
+	}
 }
 
 func FromTimestamp(raw string) (time.Time, error) {

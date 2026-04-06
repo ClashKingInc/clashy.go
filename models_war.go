@@ -79,6 +79,7 @@ type ClanWarLogEntry struct {
 	TeamSize int        `json:"teamSize,omitempty"`
 	Clan     *WarClan   `json:"clan,omitempty"`
 	Opponent *WarClan   `json:"opponent,omitempty"`
+	responseMeta
 }
 
 type ClanWarLeagueClan struct {
@@ -95,6 +96,7 @@ type ClanWarLeagueGroup struct {
 	Rounds []struct {
 		WarTags []string `json:"warTags,omitempty"`
 	} `json:"rounds,omitempty"`
+	responseMeta
 }
 
 type ExtendedCWLGroup struct {
