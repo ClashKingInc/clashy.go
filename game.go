@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var armyHeroPattern = regexp.MustCompile(`^(\d+)(?:m\d+)?(?:p(\d+))?(?:e(\d+)(?:_(\d+))?)?$`)
+
 type StaticUnit struct {
 	Name        string
 	Level       int
@@ -219,13 +221,14 @@ func ParseArmyRecipe(static *StaticData, link string) ArmyRecipe {
 	if static == nil {
 		return recipe
 	}
-	armyLinkSeparator := regexp.MustCompile(`h(?P<heroes>[^idus]+)|i(?P<castle_troops>[\d+x-]+)|d(?P<castle_spells>[\d+x-]+)|u(?P<units>[\d+x-]+)|s(?P<spells>[\d+x-]+)`)
-	heroPattern := regexp.MustCompile(`(?P<hero_id>\d+)(?:m\d+)?(?:p(?P<pet_id>\d+))?(?:e(?P<eq1>\d+)(?:_(?P<eq2>\d+))?)?`)
-	for _, match := range armyLinkSeparator.FindAllString(link, -1) {
+	for _, match := range splitArmySections(extractArmyPayload(link)) {
+		if len(match) < 2 {
+			continue
+		}
 		switch {
 		case strings.HasPrefix(match, "h"):
 			for _, entry := range strings.Split(strings.TrimPrefix(match, "h"), "-") {
-				g := heroPattern.FindStringSubmatch(entry)
+				g := armyHeroPattern.FindStringSubmatch(entry)
 				if g == nil {
 					continue
 				}
@@ -249,19 +252,56 @@ func ParseArmyRecipe(static *StaticData, link string) ArmyRecipe {
 				recipe.HeroesLoadout = append(recipe.HeroesLoadout, loadout)
 			}
 		case strings.HasPrefix(match, "i"):
-			parseArmyItems(static, strings.TrimPrefix(match, "i"), TroopBaseID, true, &recipe)
+			parseArmyItems(static, strings.TrimPrefix(match, "i"), TroopBaseID, true, true, &recipe)
 		case strings.HasPrefix(match, "d"):
-			parseArmyItems(static, strings.TrimPrefix(match, "d"), SpellBaseID, false, &recipe)
+			parseArmyItems(static, strings.TrimPrefix(match, "d"), SpellBaseID, false, true, &recipe)
 		case strings.HasPrefix(match, "u"):
-			parseArmyItems(static, strings.TrimPrefix(match, "u"), TroopBaseID, true, &recipe)
+			parseArmyItems(static, strings.TrimPrefix(match, "u"), TroopBaseID, true, false, &recipe)
 		case strings.HasPrefix(match, "s"):
-			parseArmyItems(static, strings.TrimPrefix(match, "s"), SpellBaseID, false, &recipe)
+			parseArmyItems(static, strings.TrimPrefix(match, "s"), SpellBaseID, false, false, &recipe)
 		}
 	}
 	return recipe
 }
 
-func parseArmyItems(static *StaticData, payload string, baseID int, troops bool, recipe *ArmyRecipe) {
+func extractArmyPayload(link string) string {
+	parsed, err := url.Parse(link)
+	if err == nil {
+		if army := parsed.Query().Get("army"); army != "" {
+			return army
+		}
+	}
+	return link
+}
+
+func splitArmySections(payload string) []string {
+	var sections []string
+	start := -1
+	for i := 0; i < len(payload); i++ {
+		if !isArmySectionMarker(payload[i]) {
+			continue
+		}
+		if start >= 0 {
+			sections = append(sections, payload[start:i])
+		}
+		start = i
+	}
+	if start >= 0 {
+		sections = append(sections, payload[start:])
+	}
+	return sections
+}
+
+func isArmySectionMarker(b byte) bool {
+	switch b {
+	case 'h', 'i', 'd', 'u', 's':
+		return true
+	default:
+		return false
+	}
+}
+
+func parseArmyItems(static *StaticData, payload string, baseID int, troops bool, clanCastle bool, recipe *ArmyRecipe) {
 	parts := strings.Split(payload, "-")
 	for _, part := range parts {
 		split := strings.Split(part, "x")
@@ -272,14 +312,14 @@ func parseArmyItems(static *StaticData, payload string, baseID int, troops bool,
 		id, _ := strconv.Atoi(split[1])
 		if troops {
 			tc := TroopCount{Troop: buildTroopFromStatic(static.LookupByID(baseID+id), 1), Quantity: qty}
-			if strings.Contains(recipe.Link, "i"+payload) {
+			if clanCastle {
 				recipe.ClanCastleTroops = append(recipe.ClanCastleTroops, tc)
 			} else {
 				recipe.Troops = append(recipe.Troops, tc)
 			}
 		} else {
 			sc := SpellCount{Spell: buildSpellFromStatic(static.LookupByID(baseID+id), 1), Quantity: qty}
-			if strings.Contains(recipe.Link, "d"+payload) {
+			if clanCastle {
 				recipe.ClanCastleSpells = append(recipe.ClanCastleSpells, sc)
 			} else {
 				recipe.Spells = append(recipe.Spells, sc)
