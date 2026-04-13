@@ -130,10 +130,10 @@ func TestMockAPIPlayerEndpoints(t *testing.T) {
 	if troop := player.GetTroop("Barbarian"); troop == nil {
 		t.Fatalf("expected troop lookup")
 	}
-	if player.CurrentLeagueGroupTag == "" || player.CurrentLeagueSeasonID == "" {
+	if player.CurrentLeagueGroupTag == "" || player.CurrentLeagueSeasonID == 0 {
 		t.Fatalf("expected current league group metadata on player: %#v", player)
 	}
-	if player.PreviousLeagueGroupTag == "" || player.PreviousLeagueSeasonID == "" {
+	if player.PreviousLeagueGroupTag == "" || player.PreviousLeagueSeasonID == 0 {
 		t.Fatalf("expected previous league group metadata on player: %#v", player)
 	}
 
@@ -149,11 +149,11 @@ func TestMockAPIPlayerEndpoints(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get player league history: %v", err)
 	}
-	if len(history) == 0 || history[0].LeagueSeasonID == "" || history[0].LeagueTierID == 0 {
+	if len(history) == 0 || history[0].LeagueSeasonID == 0 || history[0].LeagueTierID == 0 {
 		t.Fatalf("unexpected player league history: %#v", history)
 	}
 
-	currentGroup, err := client.GetPlayerLeagueGroup(ctx, player.Tag, player.CurrentLeagueGroupTag, player.CurrentLeagueSeasonID.String())
+	currentGroup, err := client.GetPlayerLeagueGroup(ctx, player.Tag, player.CurrentLeagueGroupTag, player.CurrentLeagueSeasonID)
 	if err != nil {
 		t.Fatalf("get current player league group: %v", err)
 	}
@@ -161,7 +161,7 @@ func TestMockAPIPlayerEndpoints(t *testing.T) {
 		t.Fatalf("unexpected current player league group: %#v", currentGroup)
 	}
 
-	previousGroup, err := client.GetPlayerLeagueGroup(ctx, player.Tag, player.PreviousLeagueGroupTag, player.PreviousLeagueSeasonID.String())
+	previousGroup, err := client.GetPlayerLeagueGroup(ctx, player.Tag, player.PreviousLeagueGroupTag, player.PreviousLeagueSeasonID)
 	if err != nil {
 		t.Fatalf("get previous player league group: %v", err)
 	}

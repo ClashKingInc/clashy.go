@@ -1,36 +1,5 @@
 package clashy
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
-
-type FlexibleID string
-
-func (id *FlexibleID) UnmarshalJSON(data []byte) error {
-	if len(data) == 0 || string(data) == "null" {
-		*id = ""
-		return nil
-	}
-
-	var str string
-	if err := json.Unmarshal(data, &str); err == nil {
-		*id = FlexibleID(str)
-		return nil
-	}
-
-	var num json.Number
-	if err := json.Unmarshal(data, &num); err == nil {
-		*id = FlexibleID(num.String())
-		return nil
-	}
-
-	return fmt.Errorf("invalid flexible id: %s", strings.TrimSpace(string(data)))
-}
-
-func (id FlexibleID) String() string { return string(id) }
-
 type Resource struct {
 	Name   string `json:"name,omitempty"`
 	Amount int    `json:"amount,omitempty"`
@@ -50,17 +19,17 @@ type BattleLogEntry struct {
 }
 
 type LeagueHistoryEntry struct {
-	LeagueSeasonID FlexibleID `json:"leagueSeasonId,omitempty"`
-	LeagueTrophies int        `json:"leagueTrophies,omitempty"`
-	LeagueTierID   int        `json:"leagueTierId,omitempty"`
-	Placement      int        `json:"placement,omitempty"`
-	AttackWins     int        `json:"attackWins,omitempty"`
-	AttackLosses   int        `json:"attackLosses,omitempty"`
-	AttackStars    int        `json:"attackStars,omitempty"`
-	DefenseWins    int        `json:"defenseWins,omitempty"`
-	DefenseLosses  int        `json:"defenseLosses,omitempty"`
-	DefenseStars   int        `json:"defenseStars,omitempty"`
-	MaxBattles     int        `json:"maxBattles,omitempty"`
+	LeagueSeasonID int `json:"leagueSeasonId,omitempty"`
+	LeagueTrophies int `json:"leagueTrophies,omitempty"`
+	LeagueTierID   int `json:"leagueTierId,omitempty"`
+	Placement      int `json:"placement,omitempty"`
+	AttackWins     int `json:"attackWins,omitempty"`
+	AttackLosses   int `json:"attackLosses,omitempty"`
+	AttackStars    int `json:"attackStars,omitempty"`
+	DefenseWins    int `json:"defenseWins,omitempty"`
+	DefenseLosses  int `json:"defenseLosses,omitempty"`
+	DefenseStars   int `json:"defenseStars,omitempty"`
+	MaxBattles     int `json:"maxBattles,omitempty"`
 	responseMeta
 }
 

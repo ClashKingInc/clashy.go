@@ -1,12 +1,14 @@
-package clashy
+package clashy_test
 
 import (
 	"testing"
 	"time"
+
+	clashy "github.com/clashkinginc/clashy.go"
 )
 
 func TestGetSeasonBeforeTransition(t *testing.T) {
-	season := GetSeason(time.Date(2025, time.August, 24, 12, 0, 0, 0, time.UTC), true)
+	season := clashy.GetSeason(time.Date(2025, time.August, 24, 12, 0, 0, 0, time.UTC), true)
 
 	if season.SeasonID != "2025-08" {
 		t.Fatalf("unexpected season id: %s", season.SeasonID)
@@ -20,7 +22,7 @@ func TestGetSeasonBeforeTransition(t *testing.T) {
 }
 
 func TestGetSeasonFixedSeptemberWindow(t *testing.T) {
-	season := GetSeason(time.Date(2025, time.September, 15, 12, 0, 0, 0, time.UTC), true)
+	season := clashy.GetSeason(time.Date(2025, time.September, 15, 12, 0, 0, 0, time.UTC), true)
 
 	if season.SeasonID != "2025-09" {
 		t.Fatalf("unexpected season id: %s", season.SeasonID)
@@ -34,7 +36,7 @@ func TestGetSeasonFixedSeptemberWindow(t *testing.T) {
 }
 
 func TestGetSeasonAfterTransition(t *testing.T) {
-	season := GetSeason(time.Date(2025, time.November, 10, 12, 0, 0, 0, time.UTC), true)
+	season := clashy.GetSeason(time.Date(2025, time.November, 10, 12, 0, 0, 0, time.UTC), true)
 
 	if season.SeasonID != "2025-11" {
 		t.Fatalf("unexpected season id: %s", season.SeasonID)
@@ -71,7 +73,7 @@ func TestGetSeasonByID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		season, err := GetSeasonByID(tt.id)
+		season, err := clashy.GetSeasonByID(tt.id)
 		if err != nil {
 			t.Fatalf("get season by id %s: %v", tt.id, err)
 		}
@@ -85,7 +87,7 @@ func TestGetSeasonByID(t *testing.T) {
 }
 
 func TestGetTournamentWindow(t *testing.T) {
-	window := GetTournamentWindow(time.Date(2026, time.March, 31, 12, 0, 0, 0, time.UTC))
+	window := clashy.GetTournamentWindow(time.Date(2026, time.March, 31, 12, 0, 0, 0, time.UTC))
 
 	if window.ID != "2026-03-30" {
 		t.Fatalf("unexpected window id: %s", window.ID)
@@ -99,7 +101,7 @@ func TestGetTournamentWindow(t *testing.T) {
 }
 
 func TestGetTournamentWindowBeforeMondayReset(t *testing.T) {
-	window := GetTournamentWindow(time.Date(2026, time.March, 30, 4, 59, 0, 0, time.UTC))
+	window := clashy.GetTournamentWindow(time.Date(2026, time.March, 30, 4, 59, 0, 0, time.UTC))
 
 	if window.ID != "2026-03-23" {
 		t.Fatalf("unexpected window id: %s", window.ID)
@@ -107,8 +109,8 @@ func TestGetTournamentWindowBeforeMondayReset(t *testing.T) {
 }
 
 func TestGetClanGamesWindow(t *testing.T) {
-	start := GetClanGamesStart(time.Date(2026, time.March, 29, 12, 0, 0, 0, time.UTC))
-	end := GetClanGamesEnd(time.Date(2026, time.March, 29, 12, 0, 0, 0, time.UTC))
+	start := clashy.GetClanGamesStart(time.Date(2026, time.March, 29, 12, 0, 0, 0, time.UTC))
+	end := clashy.GetClanGamesEnd(time.Date(2026, time.March, 29, 12, 0, 0, 0, time.UTC))
 
 	if !start.Equal(time.Date(2026, time.April, 22, 8, 0, 0, 0, time.UTC)) {
 		t.Fatalf("unexpected clan games start: %s", start)
@@ -119,8 +121,8 @@ func TestGetClanGamesWindow(t *testing.T) {
 }
 
 func TestGetRaidWeekendWindow(t *testing.T) {
-	start := GetRaidWeekendStart(time.Date(2026, time.March, 31, 12, 0, 0, 0, time.UTC))
-	end := GetRaidWeekendEnd(time.Date(2026, time.March, 31, 12, 0, 0, 0, time.UTC))
+	start := clashy.GetRaidWeekendStart(time.Date(2026, time.March, 31, 12, 0, 0, 0, time.UTC))
+	end := clashy.GetRaidWeekendEnd(time.Date(2026, time.March, 31, 12, 0, 0, 0, time.UTC))
 
 	if !start.Equal(time.Date(2026, time.April, 3, 7, 0, 0, 0, time.UTC)) {
 		t.Fatalf("unexpected raid weekend start: %s", start)

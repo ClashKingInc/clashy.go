@@ -1,4 +1,4 @@
-package events_test
+package clashy_test
 
 import (
 	"context"
@@ -376,30 +376,5 @@ func TestTrackerGroupRateLimitOverridesClientLimit(t *testing.T) {
 	}
 	if customMax != 2 {
 		t.Fatalf("expected custom group to bypass client limit and use its own concurrency limit, got %d", customMax)
-	}
-}
-
-func waitForCount(t *testing.T, counter *atomic.Int32, want int32, timeout time.Duration) {
-	t.Helper()
-
-	deadline := time.Now().Add(timeout)
-	for time.Now().Before(deadline) {
-		if counter.Load() >= want {
-			return
-		}
-		time.Sleep(5 * time.Millisecond)
-	}
-	t.Fatalf("timed out waiting for count %d, got %d", want, counter.Load())
-}
-
-func setMax(dst *atomic.Int32, current int32) {
-	for {
-		max := dst.Load()
-		if current <= max {
-			return
-		}
-		if dst.CompareAndSwap(max, current) {
-			return
-		}
 	}
 }

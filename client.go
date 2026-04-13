@@ -32,14 +32,6 @@ func NewClient(cfg ClientConfig) (*Client, error) {
 	}, nil
 }
 
-func MustClient(cfg ClientConfig) *Client {
-	client, err := NewClient(cfg)
-	if err != nil {
-		panic(err)
-	}
-	return client
-}
-
 func (c *Client) Login(ctx context.Context, email, password string) error {
 	return c.http.LoginDeveloper(ctx, email, password)
 }
@@ -152,14 +144,6 @@ func (c *Client) SearchClans(ctx context.Context, req SearchClansRequest) ([]Cla
 	return response.Items, nil
 }
 
-func (c *Client) SearchClansInto(ctx context.Context, req SearchClansRequest, out any) error {
-	path := "/clans"
-	if values := req.values().Encode(); values != "" {
-		path += "?" + values
-	}
-	return c.fetchItems(ctx, path, out)
-}
-
 func (c *Client) GetClan(ctx context.Context, tag string) (*Clan, error) {
 	var clan Clan
 	_, err := c.requestJSON(ctx, "GET", "/clans/"+encodeTag(tag), nil, &clan, c.defaultRequestOptions())
@@ -168,11 +152,6 @@ func (c *Client) GetClan(ctx context.Context, tag string) (*Clan, error) {
 	}
 	clan.Finalize()
 	return &clan, nil
-}
-
-func (c *Client) GetClanInto(ctx context.Context, tag string, out any) error {
-	_, err := c.requestJSON(ctx, "GET", "/clans/"+encodeTag(tag), nil, out, c.defaultRequestOptions())
-	return err
 }
 
 func (c *Client) GetClans(ctx context.Context, tags []string) ([]Clan, error) {
@@ -550,11 +529,6 @@ func (c *Client) GetPlayer(ctx context.Context, tag string) (*Player, error) {
 	return &out, err
 }
 
-func (c *Client) GetPlayerInto(ctx context.Context, tag string, out any) error {
-	_, err := c.requestJSON(ctx, "GET", "/players/"+encodeTag(tag), nil, out, c.defaultRequestOptions())
-	return err
-}
-
 func (c *Client) GetPlayers(ctx context.Context, tags []string) ([]Player, error) {
 	var out []Player
 	for _, tag := range tags {
@@ -583,11 +557,11 @@ func (c *Client) GetPlayerLeagueHistory(ctx context.Context, playerTag string) (
 	return response.Items, err
 }
 
-func (c *Client) GetPlayerLeagueGroup(ctx context.Context, playerTag, leagueGroupTag, leagueSeasonID string) (*LeagueTierGroup, error) {
+func (c *Client) GetPlayerLeagueGroup(ctx context.Context, playerTag, leagueGroupTag string, leagueSeasonID int) (*LeagueTierGroup, error) {
 	var group LeagueTierGroup
 	values := make(url.Values)
 	values.Set("playerTag", CorrectTag(playerTag))
-	path := "/leaguegroup/" + encodeTag(leagueGroupTag) + "/" + url.PathEscape(strings.TrimSpace(leagueSeasonID))
+	path := "/leaguegroup/" + encodeTag(leagueGroupTag) + "/" + strconv.Itoa(leagueSeasonID)
 	if encoded := values.Encode(); encoded != "" {
 		path += "?" + encoded
 	}
@@ -633,9 +607,6 @@ func (c *Client) GetTroop(name string, isHomeVillage bool, level int) *Troop {
 }
 
 func (c *Client) GetSpell(name string, level int) *Spell {
-	if level == 0 {
-		level = 1
-	}
 	if item := c.staticData.LookupByName(name, "spells", ""); item != nil {
 		spell := buildSpellFromStatic(item, level)
 		spell.Name = firstNonEmpty(spell.Name, name)
@@ -645,9 +616,6 @@ func (c *Client) GetSpell(name string, level int) *Spell {
 }
 
 func (c *Client) GetHero(name string, level int) *Hero {
-	if level == 0 {
-		level = 1
-	}
 	if item := c.staticData.LookupByName(name, "heroes", ""); item != nil {
 		hero := buildHeroFromStatic(item, level)
 		hero.Name = firstNonEmpty(hero.Name, name)
@@ -657,9 +625,6 @@ func (c *Client) GetHero(name string, level int) *Hero {
 }
 
 func (c *Client) GetPet(name string, level int) *Pet {
-	if level == 0 {
-		level = 1
-	}
 	if item := c.staticData.LookupByName(name, "pets", ""); item != nil {
 		pet := buildPetFromStatic(item, level)
 		pet.Name = firstNonEmpty(pet.Name, name)
@@ -669,9 +634,6 @@ func (c *Client) GetPet(name string, level int) *Pet {
 }
 
 func (c *Client) GetEquipment(name string, level int) *Equipment {
-	if level == 0 {
-		level = 1
-	}
 	if item := c.staticData.LookupByName(name, "equipment", ""); item != nil {
 		equipment := buildEquipmentFromStatic(item, level)
 		equipment.Name = firstNonEmpty(equipment.Name, name)
@@ -703,30 +665,4 @@ func (c *Client) GetExtendedCWLGroupData(name string) *ExtendedCWLGroup {
 		group.Name = name
 	}
 	return &group
-}
-
-func GetClanAs[T any](ctx context.Context, client *Client, tag string) (*T, error) {
-	var out T
-	if err := client.GetClanInto(ctx, tag, &out); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func GetPlayerAs[T any](ctx context.Context, client *Client, tag string) (*T, error) {
-	var out T
-	if err := client.GetPlayerInto(ctx, tag, &out); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func SearchClansAs[T any](ctx context.Context, client *Client, req SearchClansRequest) ([]T, error) {
-	var response struct {
-		Items []T `json:"items"`
-	}
-	if err := client.SearchClansInto(ctx, req, &response); err != nil {
-		return nil, err
-	}
-	return response.Items, nil
 }

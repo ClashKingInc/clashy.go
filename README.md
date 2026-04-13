@@ -30,7 +30,7 @@ go get github.com/clashkinginc/clashy.go@main
 
 This is the basic usage of the library. This example logs in, fetches a player, searches for clans, and loads the current war for a clan.
 
-```go
+```text
 package main
 
 import (
@@ -49,6 +49,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer func() { _ = client.Close() }()
 
 	if err := client.Login(ctx, "email", "password"); err != nil {
 		var invalid *clashy.InvalidCredentials
@@ -93,9 +94,28 @@ func main() {
 
 If you already have API tokens, you can skip developer-site login:
 
-```go
-if err := client.LoginWithTokens(ctx, "your-api-token"); err != nil {
-	log.Fatal(err)
+```text
+package main
+
+import (
+	"context"
+	"log"
+
+	clashy "github.com/clashkinginc/clashy.go"
+)
+
+func main() {
+	ctx := context.Background()
+
+	client, err := clashy.NewClient(clashy.DefaultClientConfig())
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() { _ = client.Close() }()
+
+	if err := client.LoginWithTokens(ctx, "your-api-token"); err != nil {
+		log.Fatal(err)
+	}
 }
 ```
 
@@ -103,7 +123,7 @@ if err := client.LoginWithTokens(ctx, "your-api-token"); err != nil {
 
 The `events` package provides polling-based trackers for clans, players, and wars. Trackers compare snapshots and dispatch handlers when a spec matches.
 
-```go
+```text
 package main
 
 import (
@@ -125,6 +145,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer func() { _ = client.Close() }()
 
 	if err := client.Login(ctx, "email", "password"); err != nil {
 		log.Fatal(err)
@@ -176,7 +197,6 @@ The client also includes helpers for:
 - battle logs, raid logs, war logs, and CWL data
 - player token verification
 - static game-data lookups such as troops, spells, heroes, pets, equipment, and translations
-- generic decode helpers like `GetClanAs[T]`, `GetPlayerAs[T]`, and `SearchClansAs[T]`
 
 ## Contributing
 

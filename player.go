@@ -24,9 +24,9 @@ type Player struct {
 	Role                    Role              `json:"role,omitempty"`
 	Clan                    *PlayerClan       `json:"clan,omitempty"`
 	CurrentLeagueGroupTag   string            `json:"currentLeagueGroupTag,omitempty"`
-	CurrentLeagueSeasonID   FlexibleID        `json:"currentLeagueSeasonId,omitempty"`
+	CurrentLeagueSeasonID   int               `json:"currentLeagueSeasonId,omitempty"`
 	PreviousLeagueGroupTag  string            `json:"previousLeagueGroupTag,omitempty"`
-	PreviousLeagueSeasonID  FlexibleID        `json:"previousLeagueSeasonId,omitempty"`
+	PreviousLeagueSeasonID  int               `json:"previousLeagueSeasonId,omitempty"`
 	LegendStatistics        *LegendStatistics `json:"legendStatistics,omitempty"`
 	Labels                  []Label           `json:"labels,omitempty"`
 	Achievements            []Achievement     `json:"achievements,omitempty"`
