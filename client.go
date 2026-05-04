@@ -57,8 +57,7 @@ func (c *Client) requestJSON(ctx context.Context, method, path string, body any,
 	if err := json.Unmarshal(payload, out); err != nil {
 		return 0, err
 	}
-	setRawJSON(out, payload, retry)
-	applyPostDecode(c, out)
+	applyResponseMeta(out, retry)
 	return retry, nil
 }
 
@@ -138,9 +137,6 @@ func (c *Client) SearchClans(ctx context.Context, req SearchClansRequest) ([]Cla
 	if err := c.fetchItems(ctx, path, &response); err != nil {
 		return nil, err
 	}
-	for i := range response.Items {
-		response.Items[i].Finalize()
-	}
 	return response.Items, nil
 }
 
@@ -150,20 +146,7 @@ func (c *Client) GetClan(ctx context.Context, tag string) (*Clan, error) {
 	if err != nil {
 		return nil, err
 	}
-	clan.Finalize()
 	return &clan, nil
-}
-
-func (c *Client) GetClans(ctx context.Context, tags []string) ([]Clan, error) {
-	out := make([]Clan, 0, len(tags))
-	for _, tag := range tags {
-		clan, err := c.GetClan(ctx, tag)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, *clan)
-	}
-	return out, nil
 }
 
 func (c *Client) GetMembers(ctx context.Context, clanTag string, limit int, after, before string) ([]ClanMember, error) {
@@ -440,42 +423,42 @@ func (c *Client) GetLocationPlayersBuilderBase(ctx context.Context, locationID, 
 	return response.Items, err
 }
 
-func (c *Client) getLeagueItems(ctx context.Context, endpoint string, limit int, before, after string) ([]BaseLeague, error) {
+func (c *Client) getLeagueItems(ctx context.Context, endpoint string, limit int, before, after string) ([]League, error) {
 	var response struct {
-		Items []BaseLeague `json:"items"`
+		Items []League `json:"items"`
 	}
 	err := c.getRankingItems(ctx, endpoint, limit, before, after, &response)
 	return response.Items, err
 }
 
-func (c *Client) SearchLeagues(ctx context.Context, limit int, before, after string) ([]BaseLeague, error) {
+func (c *Client) SearchLeagues(ctx context.Context, limit int, before, after string) ([]League, error) {
 	return c.getLeagueItems(ctx, "/leaguetiers", limit, before, after)
 }
-func (c *Client) SearchBuilderBaseLeagues(ctx context.Context, limit int, before, after string) ([]BaseLeague, error) {
+func (c *Client) SearchBuilderBaseLeagues(ctx context.Context, limit int, before, after string) ([]League, error) {
 	return c.getLeagueItems(ctx, "/builderbaseleagues", limit, before, after)
 }
-func (c *Client) SearchWarLeagues(ctx context.Context, limit int, before, after string) ([]BaseLeague, error) {
+func (c *Client) SearchWarLeagues(ctx context.Context, limit int, before, after string) ([]League, error) {
 	return c.getLeagueItems(ctx, "/warleagues", limit, before, after)
 }
-func (c *Client) SearchCapitalLeagues(ctx context.Context, limit int, before, after string) ([]BaseLeague, error) {
+func (c *Client) SearchCapitalLeagues(ctx context.Context, limit int, before, after string) ([]League, error) {
 	return c.getLeagueItems(ctx, "/capitalleagues", limit, before, after)
 }
 
-func (c *Client) GetLeague(ctx context.Context, id int) (*BaseLeague, error) {
-	return c.getBaseLeague(ctx, "/leaguetiers/"+strconv.Itoa(id))
+func (c *Client) GetLeague(ctx context.Context, id int) (*League, error) {
+	return c.getLeague(ctx, "/leaguetiers/"+strconv.Itoa(id))
 }
-func (c *Client) GetBuilderBaseLeague(ctx context.Context, id int) (*BaseLeague, error) {
-	return c.getBaseLeague(ctx, "/builderbaseleagues/"+strconv.Itoa(id))
+func (c *Client) GetBuilderBaseLeague(ctx context.Context, id int) (*League, error) {
+	return c.getLeague(ctx, "/builderbaseleagues/"+strconv.Itoa(id))
 }
-func (c *Client) GetWarLeague(ctx context.Context, id int) (*BaseLeague, error) {
-	return c.getBaseLeague(ctx, "/warleagues/"+strconv.Itoa(id))
+func (c *Client) GetWarLeague(ctx context.Context, id int) (*League, error) {
+	return c.getLeague(ctx, "/warleagues/"+strconv.Itoa(id))
 }
-func (c *Client) GetCapitalLeague(ctx context.Context, id int) (*BaseLeague, error) {
-	return c.getBaseLeague(ctx, "/capitalleagues/"+strconv.Itoa(id))
+func (c *Client) GetCapitalLeague(ctx context.Context, id int) (*League, error) {
+	return c.getLeague(ctx, "/capitalleagues/"+strconv.Itoa(id))
 }
 
-func (c *Client) getBaseLeague(ctx context.Context, path string) (*BaseLeague, error) {
-	var out BaseLeague
+func (c *Client) getLeague(ctx context.Context, path string) (*League, error) {
+	var out League
 	_, err := c.requestJSON(ctx, "GET", path, nil, &out, c.defaultRequestOptions())
 	return &out, err
 }
@@ -529,18 +512,6 @@ func (c *Client) GetPlayer(ctx context.Context, tag string) (*Player, error) {
 	return &out, err
 }
 
-func (c *Client) GetPlayers(ctx context.Context, tags []string) ([]Player, error) {
-	var out []Player
-	for _, tag := range tags {
-		player, err := c.GetPlayer(ctx, tag)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, *player)
-	}
-	return out, nil
-}
-
 func (c *Client) GetBattleLog(ctx context.Context, playerTag string) ([]BattleLogEntry, error) {
 	var response struct {
 		Items []BattleLogEntry `json:"items"`
@@ -590,6 +561,9 @@ func (c *Client) ParseArmyLink(link string) ArmyRecipe             { return Pars
 func (c *Client) ParseAccountData(data map[string]any) AccountData { return ParseAccountData(data) }
 
 func (c *Client) GetTroop(name string, isHomeVillage bool, level int) *Troop {
+	if c == nil || c.staticData == nil {
+		return nil
+	}
 	if level == 0 {
 		level = 1
 	}
@@ -607,6 +581,9 @@ func (c *Client) GetTroop(name string, isHomeVillage bool, level int) *Troop {
 }
 
 func (c *Client) GetSpell(name string, level int) *Spell {
+	if c == nil || c.staticData == nil {
+		return nil
+	}
 	if item := c.staticData.LookupByName(name, "spells", ""); item != nil {
 		spell := buildSpellFromStatic(item, level)
 		spell.Name = firstNonEmpty(spell.Name, name)
@@ -616,6 +593,9 @@ func (c *Client) GetSpell(name string, level int) *Spell {
 }
 
 func (c *Client) GetHero(name string, level int) *Hero {
+	if c == nil || c.staticData == nil {
+		return nil
+	}
 	if item := c.staticData.LookupByName(name, "heroes", ""); item != nil {
 		hero := buildHeroFromStatic(item, level)
 		hero.Name = firstNonEmpty(hero.Name, name)
@@ -625,6 +605,9 @@ func (c *Client) GetHero(name string, level int) *Hero {
 }
 
 func (c *Client) GetPet(name string, level int) *Pet {
+	if c == nil || c.staticData == nil {
+		return nil
+	}
 	if item := c.staticData.LookupByName(name, "pets", ""); item != nil {
 		pet := buildPetFromStatic(item, level)
 		pet.Name = firstNonEmpty(pet.Name, name)
@@ -634,6 +617,9 @@ func (c *Client) GetPet(name string, level int) *Pet {
 }
 
 func (c *Client) GetEquipment(name string, level int) *Equipment {
+	if c == nil || c.staticData == nil {
+		return nil
+	}
 	if item := c.staticData.LookupByName(name, "equipment", ""); item != nil {
 		equipment := buildEquipmentFromStatic(item, level)
 		equipment.Name = firstNonEmpty(equipment.Name, name)

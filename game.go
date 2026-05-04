@@ -1,7 +1,6 @@
 package clashy
 
 import (
-	"encoding/json"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -18,14 +17,12 @@ type StaticUnit struct {
 	Village     string
 	UpgradeCost int
 	UpgradeTime time.Duration
-	Raw         map[string]any
 }
 
 func fillStaticUnit(unit *StaticUnit, data map[string]any, level int) {
 	if data == nil {
 		return
 	}
-	unit.Raw = data
 	if unit.Name == "" {
 		unit.Name, _ = data["name"].(string)
 	}
@@ -100,19 +97,24 @@ type Troop struct {
 	StaticUnit
 }
 
-func (t *Troop) postDecode(c *Client) {
-	if c == nil || c.staticData == nil {
-		return
-	}
-	fillStaticUnit(&t.StaticUnit, c.staticData.LookupByName(t.Name, "troops", t.Village), t.Level)
-	t.Name = firstNonEmpty(t.Name, t.StaticUnit.Name)
-	t.Village = firstNonEmpty(t.Village, t.StaticUnit.Village)
-	t.Level = max(t.Level, t.StaticUnit.Level)
-	t.MaxLevel = max(t.MaxLevel, t.StaticUnit.MaxLevel)
-}
-
 func (t Troop) IsHomeBase() bool    { return t.Village == "home" || t.Village == "" }
 func (t Troop) IsBuilderBase() bool { return t.Village == "builderBase" }
+
+func (t Troop) IsSuperTroop() bool {
+	for _, name := range SuperTroopOrder {
+		if t.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (t Troop) Static(c *Client) *Troop {
+	if c == nil {
+		return nil
+	}
+	return c.GetTroop(t.Name, t.IsHomeBase(), t.Level)
+}
 
 type Spell struct {
 	Name     string `json:"name"`
@@ -122,14 +124,11 @@ type Spell struct {
 	StaticUnit
 }
 
-func (s *Spell) postDecode(c *Client) {
-	if c == nil || c.staticData == nil {
-		return
+func (s Spell) Static(c *Client) *Spell {
+	if c == nil {
+		return nil
 	}
-	fillStaticUnit(&s.StaticUnit, c.staticData.LookupByName(s.Name, "spells", s.Village), s.Level)
-	s.Name = firstNonEmpty(s.Name, s.StaticUnit.Name)
-	s.Level = max(s.Level, s.StaticUnit.Level)
-	s.MaxLevel = max(s.MaxLevel, s.StaticUnit.MaxLevel)
+	return c.GetSpell(s.Name, s.Level)
 }
 
 type Hero struct {
@@ -141,17 +140,11 @@ type Hero struct {
 	StaticUnit
 }
 
-func (h *Hero) postDecode(c *Client) {
-	if c == nil || c.staticData == nil {
-		return
+func (h Hero) Static(c *Client) *Hero {
+	if c == nil {
+		return nil
 	}
-	fillStaticUnit(&h.StaticUnit, c.staticData.LookupByName(h.Name, "heroes", h.Village), h.Level)
-	h.Name = firstNonEmpty(h.Name, h.StaticUnit.Name)
-	h.Level = max(h.Level, h.StaticUnit.Level)
-	h.MaxLevel = max(h.MaxLevel, h.StaticUnit.MaxLevel)
-	for i := range h.Equipment {
-		h.Equipment[i].postDecode(c)
-	}
+	return c.GetHero(h.Name, h.Level)
 }
 
 type Pet struct {
@@ -162,14 +155,11 @@ type Pet struct {
 	StaticUnit
 }
 
-func (p *Pet) postDecode(c *Client) {
-	if c == nil || c.staticData == nil {
-		return
+func (p Pet) Static(c *Client) *Pet {
+	if c == nil {
+		return nil
 	}
-	fillStaticUnit(&p.StaticUnit, c.staticData.LookupByName(p.Name, "pets", p.Village), p.Level)
-	p.Name = firstNonEmpty(p.Name, p.StaticUnit.Name)
-	p.Level = max(p.Level, p.StaticUnit.Level)
-	p.MaxLevel = max(p.MaxLevel, p.StaticUnit.MaxLevel)
+	return c.GetPet(p.Name, p.Level)
 }
 
 type Equipment struct {
@@ -181,14 +171,11 @@ type Equipment struct {
 	StaticUnit
 }
 
-func (e *Equipment) postDecode(c *Client) {
-	if c == nil || c.staticData == nil {
-		return
+func (e Equipment) Static(c *Client) *Equipment {
+	if c == nil {
+		return nil
 	}
-	fillStaticUnit(&e.StaticUnit, c.staticData.LookupByName(e.Name, "equipment", e.Village), e.Level)
-	e.Name = firstNonEmpty(e.Name, e.StaticUnit.Name)
-	e.Level = max(e.Level, e.StaticUnit.Level)
-	e.MaxLevel = max(e.MaxLevel, e.StaticUnit.MaxLevel)
+	return c.GetEquipment(e.Name, e.Level)
 }
 
 type HeroLoadout struct {
@@ -378,25 +365,4 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func decodeJSONMap(data []byte) map[string]any {
-	var out map[string]any
-	_ = json.Unmarshal(data, &out)
-	return out
-}
-
-func parseURLValues(raw string) url.Values {
-	u, err := url.Parse(raw)
-	if err != nil {
-		return nil
-	}
-	return u.Query()
 }

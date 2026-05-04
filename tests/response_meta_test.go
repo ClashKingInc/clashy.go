@@ -11,7 +11,7 @@ import (
 	clashy "github.com/clashkinginc/clashy.go"
 )
 
-func TestReturnedModelsCarryRawResponseMeta(t *testing.T) {
+func TestDirectReturnedModelsCarryResponseMeta(t *testing.T) {
 	t.Parallel()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -54,19 +54,13 @@ func TestReturnedModelsCarryRawResponseMeta(t *testing.T) {
 	if len(locations) != 1 {
 		t.Fatalf("expected one location, got %d", len(locations))
 	}
-	if len(locations[0].Raw) == 0 {
-		t.Fatalf("expected search location item to carry raw response bytes")
-	}
-	if locations[0].RetryAfter() != 17 {
-		t.Fatalf("expected search location item retry-after 17, got %d", locations[0].RetryAfter())
+	if locations[0].RetryAfter() != 0 {
+		t.Fatalf("expected search location item retry-after to stay unset, got %d", locations[0].RetryAfter())
 	}
 
 	location, err := client.GetLocation(context.Background(), 32000007)
 	if err != nil {
 		t.Fatalf("get location: %v", err)
-	}
-	if len(location.Raw) == 0 {
-		t.Fatalf("expected single location to carry raw response bytes")
 	}
 	if location.RetryAfter() != 17 {
 		t.Fatalf("expected single location retry-after 17, got %d", location.RetryAfter())
@@ -79,10 +73,7 @@ func TestReturnedModelsCarryRawResponseMeta(t *testing.T) {
 	if len(warLog) != 1 {
 		t.Fatalf("expected one war log entry, got %d", len(warLog))
 	}
-	if len(warLog[0].Raw) == 0 {
-		t.Fatalf("expected war log entry to carry raw response bytes")
-	}
-	if warLog[0].RetryAfter() != 17 {
-		t.Fatalf("expected war log retry-after 17, got %d", warLog[0].RetryAfter())
+	if warLog[0].RetryAfter() != 0 {
+		t.Fatalf("expected war log item retry-after to stay unset, got %d", warLog[0].RetryAfter())
 	}
 }

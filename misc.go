@@ -42,20 +42,16 @@ type Badge struct {
 	Small  string `json:"small"`
 	Medium string `json:"medium"`
 	Large  string `json:"large"`
-	URL    string `json:"-"`
 }
 
-func (b *Badge) finalize() {
-	if b == nil {
-		return
+func (b Badge) URL() string {
+	if b.Medium != "" {
+		return b.Medium
 	}
-	if b.URL == "" {
-		b.URL = b.Medium
+	if b.Large != "" {
+		return b.Large
 	}
-}
-
-func (b *Badge) postDecode(*Client) {
-	b.finalize()
+	return b.Small
 }
 
 type Icon struct {
@@ -83,14 +79,12 @@ type Location struct {
 	responseMeta
 }
 
-type BaseLeague struct {
+type League struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 	Icon *Icon  `json:"iconUrls"`
 	responseMeta
 }
-
-type League = BaseLeague
 
 type Season struct {
 	ID       string `json:"id"`
@@ -146,7 +140,6 @@ type Translation struct {
 }
 
 func (t *Translation) UnmarshalJSON(data []byte) error {
-	type alias Translation
 	var payload map[string]string
 	if err := json.Unmarshal(data, &payload); err != nil {
 		return err

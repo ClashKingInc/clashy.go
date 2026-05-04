@@ -56,7 +56,7 @@ func TestMockAPIClanEndpoints(t *testing.T) {
 	if clan.Tag != "#2PP" || clan.Name == "" {
 		t.Fatalf("unexpected clan: %#v", clan)
 	}
-	if clan.Badge.URL == "" {
+	if clan.Badge.URL() == "" {
 		t.Fatalf("expected finalized badge url")
 	}
 	if clan.MemberCount != len(clan.Members) {
@@ -121,14 +121,18 @@ func TestMockAPIPlayerEndpoints(t *testing.T) {
 	if player.Clan == nil || player.Clan.Tag == "" {
 		t.Fatalf("expected player clan data: %#v", player.Clan)
 	}
-	if player.League == nil || player.League.Name == "" {
-		t.Fatalf("expected league to be normalized from leagueTier: %#v", player.League)
+	if player.LeagueTier == nil || player.LeagueTier.Name == "" {
+		t.Fatalf("expected league tier data: %#v", player.LeagueTier)
 	}
 	if achievement := player.GetAchievement("Bigger Coffers"); achievement == nil {
 		t.Fatalf("expected achievement lookup")
 	}
 	if troop := player.GetTroop("Barbarian"); troop == nil {
 		t.Fatalf("expected troop lookup")
+	} else {
+		if staticTroop := troop.Static(client); staticTroop == nil || staticTroop.MaxLevel == 0 {
+			t.Fatalf("expected explicit static troop lookup: %#v", staticTroop)
+		}
 	}
 	if player.CurrentLeagueGroupTag == "" || player.CurrentLeagueSeasonID == 0 {
 		t.Fatalf("expected current league group metadata on player: %#v", player)

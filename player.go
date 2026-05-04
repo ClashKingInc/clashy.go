@@ -18,7 +18,6 @@ type Player struct {
 	ClanPreviousRank        int               `json:"previousClanRank,omitempty"`
 	VersusTrophies          int               `json:"versusTrophies,omitempty"`
 	BuilderBaseTrophies     int               `json:"builderBaseTrophies,omitempty"`
-	League                  *League           `json:"league,omitempty"`
 	LeagueTier              *League           `json:"leagueTier,omitempty"`
 	BuilderBaseLeague       *League           `json:"builderBaseLeague,omitempty"`
 	Role                    Role              `json:"role,omitempty"`
@@ -35,12 +34,6 @@ type Player struct {
 	Spells                  []Spell           `json:"spells,omitempty"`
 	HeroEquipment           []Equipment       `json:"heroEquipment,omitempty"`
 	responseMeta
-}
-
-func (p *Player) Finalize() {
-	if p.League == nil && p.LeagueTier != nil {
-		p.League = p.LeagueTier
-	}
 }
 
 func (p *Player) GetAchievement(name string) *Achievement {

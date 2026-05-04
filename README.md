@@ -8,7 +8,6 @@ Easy-to-use Go SDK for the Clash of Clans API.
 - Broad coverage of the official Clash of Clans API
 - Developer-site email/password login, or direct token login
 - Built-in rate limiting, caching, and static game-data helpers
-- Optional polling-based events package with pluggable snapshot stores
 
 ## Getting Started
 
@@ -118,76 +117,6 @@ func main() {
 	}
 }
 ```
-
-## Basic Events Example
-
-The `events` package provides polling-based trackers for clans, players, and wars. Trackers compare snapshots and dispatch handlers when a spec matches.
-
-```text
-package main
-
-import (
-	"context"
-	"fmt"
-	"log"
-	"time"
-
-	clashy "github.com/clashkinginc/clashy.go"
-	"github.com/clashkinginc/clashy.go/events"
-	"github.com/clashkinginc/clashy.go/stores"
-)
-
-func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	client, err := clashy.NewClient(clashy.DefaultClientConfig())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func() { _ = client.Close() }()
-
-	if err := client.Login(ctx, "email", "password"); err != nil {
-		log.Fatal(err)
-	}
-
-	engine := events.NewEngine(client, stores.NewMemoryStore())
-
-	engine.Clans().
-		Group(
-			"home-clans",
-			events.GroupTags("#TAG1", "#TAG2", "#TAG3"),
-			events.Interval(30*time.Second),
-		).
-		On(events.ClanMemberJoined(func(_ context.Context, change events.Change[clashy.Clan]) error {
-			fmt.Printf("member joined %s (%s)\n", change.Current.Name, change.Current.Tag)
-			return nil
-		}))
-
-	engine.Wars().
-		Group(
-			"war-tracker",
-			events.GroupTags("#TAG1"),
-			events.Interval(30*time.Second),
-		).
-		On(events.WarStateChanged(func(_ context.Context, change events.FieldChange[clashy.ClanWar, clashy.WarState]) error {
-			fmt.Printf("war state changed from %s to %s for %s\n", change.OldValue, change.NewValue, change.Tag)
-			return nil
-		}))
-
-	if err := engine.Start(ctx); err != nil {
-		log.Fatal(err)
-	}
-
-	select {}
-}
-```
-
-Available snapshot stores include:
-
-- `stores.NewMemoryStore()`
-- `stores.NewRedisStore(...)`
-- `stores.NewMongoStore(...)`
 
 ## Other Features
 

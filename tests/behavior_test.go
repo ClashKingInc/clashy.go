@@ -26,10 +26,6 @@ func normalizeTag(tag string) string {
 	return b.String()
 }
 
-func snapshotKey(kind, tag string) string {
-	return kind + ":" + normalizeTag(tag)
-}
-
 func TestBehaviorHelpers(t *testing.T) {
 	t.Parallel()
 
@@ -48,14 +44,4 @@ func TestBehaviorHelpers(t *testing.T) {
 		}
 	})
 
-	t.Run("snapshot_keying", func(t *testing.T) {
-		t.Parallel()
-
-		if got := snapshotKey("clan", "#2PP"); got != "clan:#2PP" {
-			t.Fatalf("unexpected clan snapshot key: %q", got)
-		}
-		if got := snapshotKey("player", " 2pp "); got != "player:#2PP" {
-			t.Fatalf("unexpected player snapshot key: %q", got)
-		}
-	})
 }
