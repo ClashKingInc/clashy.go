@@ -8,21 +8,21 @@ type PlayerClan struct {
 }
 
 type ClanMember struct {
-	Tag                 string  `json:"tag,omitempty"`
-	Name                string  `json:"name,omitempty"`
-	Role                Role    `json:"role,omitempty"`
-	ExpLevel            int     `json:"expLevel,omitempty"`
-	TownHall            int     `json:"townHallLevel,omitempty"`
-	Trophies            int     `json:"trophies,omitempty"`
-	ClanRank            int     `json:"clanRank,omitempty"`
-	ClanPreviousRank    int     `json:"previousClanRank,omitempty"`
-	Donations           int     `json:"donations,omitempty"`
-	Received            int     `json:"donationsReceived,omitempty"`
-	VersusTrophies      int     `json:"versusTrophies,omitempty"`
-	BuilderBaseTrophies int     `json:"builderBaseTrophies,omitempty"`
-	VersusRank          int     `json:"versusRank,omitempty"`
-	BuilderBaseRank     int     `json:"builderBaseRank,omitempty"`
-	League              *League `json:"league,omitempty"`
+	Tag                 string `json:"tag,omitempty"`
+	Name                string `json:"name,omitempty"`
+	Role                Role   `json:"role,omitempty"`
+	ExpLevel            int    `json:"expLevel,omitempty"`
+	TownHall            int    `json:"townHallLevel,omitempty"`
+	Trophies            int    `json:"trophies,omitempty"`
+	ClanRank            int    `json:"clanRank,omitempty"`
+	ClanPreviousRank    int    `json:"previousClanRank,omitempty"`
+	Donations           int    `json:"donations,omitempty"`
+	Received            int    `json:"donationsReceived,omitempty"`
+	VersusTrophies      int    `json:"versusTrophies,omitempty"`
+	BuilderBaseTrophies int    `json:"builderBaseTrophies,omitempty"`
+	VersusRank          int    `json:"versusRank,omitempty"`
+	BuilderBaseRank     int    `json:"builderBaseRank,omitempty"`
+	LeagueTier          League `json:"leagueTier,omitempty"`
 	responseMeta
 }
 

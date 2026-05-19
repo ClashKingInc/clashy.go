@@ -18,7 +18,7 @@ type Player struct {
 	ClanPreviousRank        int               `json:"previousClanRank,omitempty"`
 	VersusTrophies          int               `json:"versusTrophies,omitempty"`
 	BuilderBaseTrophies     int               `json:"builderBaseTrophies,omitempty"`
-	LeagueTier              *League           `json:"leagueTier,omitempty"`
+	LeagueTier              League            `json:"leagueTier,omitempty"`
 	BuilderBaseLeague       *League           `json:"builderBaseLeague,omitempty"`
 	Role                    Role              `json:"role,omitempty"`
 	Clan                    *PlayerClan       `json:"clan,omitempty"`

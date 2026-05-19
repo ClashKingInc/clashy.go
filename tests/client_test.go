@@ -121,7 +121,7 @@ func TestMockAPIPlayerEndpoints(t *testing.T) {
 	if player.Clan == nil || player.Clan.Tag == "" {
 		t.Fatalf("expected player clan data: %#v", player.Clan)
 	}
-	if player.LeagueTier == nil || player.LeagueTier.Name == "" {
+	if player.LeagueTier.Name == "" {
 		t.Fatalf("expected league tier data: %#v", player.LeagueTier)
 	}
 	if achievement := player.GetAchievement("Bigger Coffers"); achievement == nil {
