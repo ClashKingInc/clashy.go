@@ -12,6 +12,7 @@ type ClanMember struct {
 	Name                string  `json:"name,omitempty"`
 	Role                Role    `json:"role,omitempty"`
 	ExpLevel            int     `json:"expLevel,omitempty"`
+	TownHall            int     `json:"townHallLevel,omitempty"`
 	Trophies            int     `json:"trophies,omitempty"`
 	ClanRank            int     `json:"clanRank,omitempty"`
 	ClanPreviousRank    int     `json:"previousClanRank,omitempty"`

@@ -141,6 +141,7 @@ go test ./...
 
 - [Official Clash of Clans API](https://developer.clashofclans.com/)
 - [clashy.go Module](https://github.com/clashkinginc/clashy.go)
+- [Changelog](CHANGELOG.md)
 
 ## Disclaimer
 
