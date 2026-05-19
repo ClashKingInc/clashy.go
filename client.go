@@ -314,16 +314,6 @@ func (c *Client) getWar(ctx context.Context, path, clanTag string) (*ClanWar, er
 		return nil, err
 	}
 	war.ClanTag = CorrectTag(clanTag)
-	if war.Clan != nil {
-		for i := range war.Clan.Members {
-			war.Clan.Members[i].Clan = war.Clan
-		}
-	}
-	if war.Opponent != nil {
-		for i := range war.Opponent.Members {
-			war.Opponent.Members[i].Clan = war.Opponent
-		}
-	}
 	return &war, nil
 }
 
@@ -486,7 +476,7 @@ func (c *Client) GetSeasonRankings(ctx context.Context, leagueID int, seasonID s
 	var response struct {
 		Items []RankedPlayer `json:"items"`
 	}
-	err := c.getRankingItems(ctx, fmt.Sprintf("/leagues/%d/seasons/%s", leagueID, seasonID), 0, "", "", &response)
+	err := c.getRankingItems(ctx, fmt.Sprintf("/leagues/%d/seasons/%s", leagueID, url.PathEscape(seasonID)), 0, "", "", &response)
 	return response.Items, err
 }
 

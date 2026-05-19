@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -92,7 +91,7 @@ func downloadJSON(ctx context.Context, url, path string) error {
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("download %s: unexpected status %s", url, resp.Status)
 	}
-	body, err := io.ReadAll(resp.Body)
+	body, err := readLimited(resp.Body, 64<<20)
 	if err != nil {
 		return err
 	}

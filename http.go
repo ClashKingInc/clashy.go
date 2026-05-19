@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+const maxResponseBytes = 32 << 20
+
 type cachedResponse struct {
 	Body      []byte
 	Status    int
@@ -25,10 +27,11 @@ type HTTPClient struct {
 	client *http.Client
 	limit  *requestLimiter
 
-	mu    sync.RWMutex
-	cache map[string]cachedResponse
-	keys  []string
-	next  int
+	mu         sync.RWMutex
+	cache      map[string]cachedResponse
+	cacheOrder []string
+	keys       []string
+	next       int
 }
 
 func NewHTTPClient(cfg ClientConfig) *HTTPClient {
@@ -107,7 +110,7 @@ func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, o
 	}
 	defer resp.Body.Close()
 
-	responseBody, err := readResponseBody(resp)
+	responseBody, err := h.readResponseBody(resp)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -116,7 +119,7 @@ func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, o
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		if method == http.MethodGet && options.UpdateCache && retry > 0 {
 			h.mu.Lock()
-			h.cache[fullURL] = cachedResponse{Body: append([]byte(nil), responseBody...), Status: resp.StatusCode, ExpiresAt: time.Now().Add(time.Duration(retry) * time.Second)}
+			h.cacheResponse(fullURL, cachedResponse{Body: append([]byte(nil), responseBody...), Status: resp.StatusCode, ExpiresAt: time.Now().Add(time.Duration(retry) * time.Second)})
 			h.mu.Unlock()
 		}
 		return responseBody, resp.StatusCode, retry, nil
@@ -176,7 +179,10 @@ func (h *HTTPClient) LoginDeveloper(ctx context.Context, email, password string)
 		return err
 	}
 	defer resp.Body.Close()
-	payloadBody, _ := io.ReadAll(resp.Body)
+	payloadBody, err := readLimited(resp.Body, maxResponseBytes)
+	if err != nil {
+		return err
+	}
 	if resp.StatusCode == http.StatusForbidden {
 		return &InvalidCredentials{newHTTPException(resp.StatusCode, "invalid credentials", "developer-site login failed", payloadBody)}
 	}
@@ -240,16 +246,16 @@ func (h *HTTPClient) LoginDeveloper(ctx context.Context, email, password string)
 	return nil
 }
 
-func readResponseBody(resp *http.Response) ([]byte, error) {
+func (h *HTTPClient) readResponseBody(resp *http.Response) ([]byte, error) {
 	reader, err := decodedBodyReader(resp)
 	if err != nil {
 		return nil, err
 	}
 	if reader == resp.Body {
-		return io.ReadAll(reader)
+		return readLimited(reader, maxResponseBytes)
 	}
 	defer reader.Close()
-	return io.ReadAll(reader)
+	return readLimited(reader, maxResponseBytes)
 }
 
 func decodedBodyReader(resp *http.Response) (io.ReadCloser, error) {
@@ -287,7 +293,10 @@ func (h *HTTPClient) developerJSON(ctx context.Context, path string, reqBody any
 		return err
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
+	body, err := readLimited(resp.Body, maxResponseBytes)
+	if err != nil {
+		return err
+	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("developer-site request %s failed: %d", path, resp.StatusCode)
 	}
@@ -295,4 +304,45 @@ func (h *HTTPClient) developerJSON(ctx context.Context, path string, reqBody any
 		return nil
 	}
 	return json.Unmarshal(body, out)
+}
+
+func readLimited(reader io.Reader, maxBytes int64) ([]byte, error) {
+	if maxBytes <= 0 {
+		return io.ReadAll(reader)
+	}
+	body, err := io.ReadAll(io.LimitReader(reader, maxBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(body)) > maxBytes {
+		return nil, fmt.Errorf("response body exceeds %d bytes", maxBytes)
+	}
+	return body, nil
+}
+
+func (h *HTTPClient) enforceCacheMaxSize() {
+	if h.config.CacheMaxSize <= 0 {
+		clear(h.cache)
+		h.cacheOrder = h.cacheOrder[:0]
+		return
+	}
+	for len(h.cache) > h.config.CacheMaxSize && len(h.cacheOrder) > 0 {
+		oldest := h.cacheOrder[0]
+		h.cacheOrder = h.cacheOrder[1:]
+		if _, ok := h.cache[oldest]; !ok {
+			continue
+		}
+		delete(h.cache, oldest)
+	}
+}
+
+func (h *HTTPClient) cacheResponse(fullURL string, response cachedResponse) {
+	if h.config.CacheMaxSize <= 0 {
+		return
+	}
+	if _, exists := h.cache[fullURL]; !exists {
+		h.cacheOrder = append(h.cacheOrder, fullURL)
+	}
+	h.cache[fullURL] = response
+	h.enforceCacheMaxSize()
 }

@@ -19,7 +19,6 @@ type ClanWarMember struct {
 	OpponentAttacks    int         `json:"opponentAttacks,omitempty"`
 	Attacks            []WarAttack `json:"attacks,omitempty"`
 	BestOpponentAttack *WarAttack  `json:"bestOpponentAttack,omitempty"`
-	Clan               *WarClan
 }
 
 type WarClan struct {
@@ -60,14 +59,18 @@ func (w *ClanWar) Attacks() []WarAttack {
 		return nil
 	}
 	var out []WarAttack
-	for i := range w.Clan.Members {
-		for _, attack := range w.Clan.Members[i].Attacks {
-			out = append(out, attack)
+	if w.Clan != nil {
+		for i := range w.Clan.Members {
+			for _, attack := range w.Clan.Members[i].Attacks {
+				out = append(out, attack)
+			}
 		}
 	}
-	for i := range w.Opponent.Members {
-		for _, attack := range w.Opponent.Members[i].Attacks {
-			out = append(out, attack)
+	if w.Opponent != nil {
+		for i := range w.Opponent.Members {
+			for _, attack := range w.Opponent.Members[i].Attacks {
+				out = append(out, attack)
+			}
 		}
 	}
 	return out
