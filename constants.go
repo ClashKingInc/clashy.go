@@ -5,11 +5,17 @@
 package clashy
 
 var (
-	TroopBaseID      = 4000000
-	SpellBaseID      = 26000000
-	HeroBaseID       = 2000000
-	PetBaseID        = 60000000
-	EquipmentBaseID  = 30000000
+	// TroopBaseID is the base static-data ID offset for troops in army links.
+	TroopBaseID = 4000000
+	// SpellBaseID is the base static-data ID offset for spells in army links.
+	SpellBaseID = 26000000
+	// HeroBaseID is the base static-data ID offset for heroes in army links.
+	HeroBaseID = 2000000
+	// PetBaseID is the base static-data ID offset for pets in army links.
+	PetBaseID = 60000000
+	// EquipmentBaseID is the base static-data ID offset for hero equipment in army links.
+	EquipmentBaseID = 30000000
+	// ElixirTroopOrder lists regular home-village elixir troops in UI order.
 	ElixirTroopOrder = []string{
 		"Barbarian",
 		"Archer",
@@ -31,6 +37,7 @@ var (
 		"Thrower",
 		"Meteor Golem",
 	}
+	// DarkElixirTroopOrder lists regular home-village dark elixir troops in UI order.
 	DarkElixirTroopOrder = []string{
 		"Minion",
 		"Hog Rider",
@@ -45,7 +52,9 @@ var (
 		"Druid",
 		"Furnace",
 	}
-	HomeTroopOrder    = append(append([]string{}, ElixirTroopOrder...), DarkElixirTroopOrder...)
+	// HomeTroopOrder lists regular home-village troops in UI order.
+	HomeTroopOrder = append(append([]string{}, ElixirTroopOrder...), DarkElixirTroopOrder...)
+	// SiegeMachineOrder lists siege machines in UI order.
 	SiegeMachineOrder = []string{
 		"Wall Wrecker",
 		"Battle Blimp",
@@ -57,6 +66,7 @@ var (
 		"Troop Launcher",
 		"Sky Wagon",
 	}
+	// SuperTroopOrder lists super troops in UI order.
 	SuperTroopOrder = []string{
 		"Super Barbarian",
 		"Super Archer",
@@ -76,8 +86,10 @@ var (
 		"Super Hog Rider",
 		"Super Yeti",
 	}
+	// HomeTroopOrderWithSieges lists regular home-village troops followed by siege machines.
 	HomeTroopOrderWithSieges = append(append([]string{}, HomeTroopOrder...), SiegeMachineOrder...)
-	SeasonalTroopOrder       = []string{
+	// SeasonalTroopOrder lists temporary seasonal troops in static-data order.
+	SeasonalTroopOrder = []string{
 		"Ice Wizard",
 		"Battle Ram",
 		"Royal Ghost",
@@ -108,6 +120,7 @@ var (
 		"The Disarmer",
 		"Meteor Golem",
 	}
+	// BuilderTroopOrder lists Builder Base troops in UI order.
 	BuilderTroopOrder = []string{
 		"Raged Barbarian",
 		"Sneaky Archer",
@@ -122,6 +135,7 @@ var (
 		"Hog Glider",
 		"Electrofire Wizard",
 	}
+	// ElixirSpellOrder lists regular elixir spells in UI order.
 	ElixirSpellOrder = []string{
 		"Lightning Spell",
 		"Healing Spell",
@@ -134,6 +148,7 @@ var (
 		"Revive Spell",
 		"Totem Spell",
 	}
+	// DarkElixirSpellOrder lists regular dark elixir spells in UI order.
 	DarkElixirSpellOrder = []string{
 		"Poison Spell",
 		"Earthquake Spell",
@@ -143,11 +158,14 @@ var (
 		"Overgrowth Spell",
 		"Ice Block Spell",
 	}
+	// SeasonalSpellOrder lists temporary seasonal spells in static-data order.
 	SeasonalSpellOrder = []string{
 		"Santa's Surprise",
 		"Bag of Frostmites",
 	}
-	SpellOrder        = append(append([]string{}, ElixirSpellOrder...), DarkElixirSpellOrder...)
+	// SpellOrder lists regular spells in UI order.
+	SpellOrder = append(append([]string{}, ElixirSpellOrder...), DarkElixirSpellOrder...)
+	// HomeBaseHeroOrder lists home-village heroes in unlock order.
 	HomeBaseHeroOrder = []string{
 		"Barbarian King",
 		"Archer Queen",
@@ -156,12 +174,15 @@ var (
 		"Royal Champion",
 		"Dragon Duke",
 	}
+	// BuilderBaseHeroOrder lists Builder Base heroes in unlock order.
 	BuilderBaseHeroOrder = []string{
 		"Battle Machine",
 		"Battle Copter",
 	}
+	// HeroOrder lists all heroes in home-village then Builder Base order.
 	HeroOrder = append(append([]string{}, HomeBaseHeroOrder...), BuilderBaseHeroOrder...)
-	PetOrder  = []string{
+	// PetOrder lists hero pets in unlock order.
+	PetOrder = []string{
 		"L.A.S.S.I",
 		"Mighty Yak",
 		"Electro Owl",
@@ -175,6 +196,7 @@ var (
 		"Sneezy",
 		"Greedy Raven",
 	}
+	// EquipmentOrder lists hero equipment in static-data order.
 	EquipmentOrder = []string{
 		"Barbarian Puppet",
 		"Rage Vial",
@@ -217,6 +239,7 @@ var (
 		"Flame Blower",
 		"Electro Fangs",
 	}
+	// HVBuildingOrder lists home-village buildings in static-data order.
 	HVBuildingOrder = []string{
 		"Army Camp",
 		"Town Hall",
@@ -263,6 +286,7 @@ var (
 		"Crafting Station",
 		"Super Wizard Tower",
 	}
+	// AchievementOrder lists achievements in village and UI-priority order.
 	AchievementOrder = []string{
 		"Keep Your Account Safe!",
 		"Bigger & Better",

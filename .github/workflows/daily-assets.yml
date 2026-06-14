@@ -1,0 +1,62 @@
+name: Daily Assets Update
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-assets-update
+  cancel-in-progress: false
+
+jobs:
+  update-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Update static assets
+        run: go generate ./...
+
+      - name: Stop if unchanged
+        id: changes
+        run: |
+          if git diff --quiet -- constants.go static/static_data.json static/translations.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump version and publish update
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          latest_tag="$(git tag --list 'v*' --sort=-v:refname | head -n 1)"
+          if [ -z "$latest_tag" ]; then
+            next_tag="v0.1.0"
+          else
+            version="${latest_tag#v}"
+            IFS='.' read -r major minor patch <<< "$version"
+            next_tag="v${major}.${minor}.$((patch + 1))"
+          fi
+
+          git add constants.go static/static_data.json static/translations.json
+          git commit -m "chore: update static assets"
+          git tag "$next_tag"
+          git push origin HEAD:main --tags
+          gh release create "$next_tag" \
+            --title "$next_tag" \
+            --notes "Automated static asset update."

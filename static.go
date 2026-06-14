@@ -19,10 +19,17 @@ var staticDataBytes []byte
 //go:embed static/translations.json
 var translationsBytes []byte
 
+// StaticData is the parsed and indexed ClashKing static data embedded in the
+// package.
 type StaticData struct {
-	Raw          map[string][]map[string]any
-	ByID         map[int]map[string]any
-	ByName       map[string]map[string]any
+	// Raw preserves static-data sections exactly as parsed from static_data.json.
+	Raw map[string][]map[string]any
+	// ByID indexes static-data entries by their numeric _id value.
+	ByID map[int]map[string]any
+	// ByName indexes static-data entries by normalized name, section, and
+	// village.
+	ByName map[string]map[string]any
+	// Translations maps translation IDs to language-code/value maps.
 	Translations map[string]map[string]string
 }
 
@@ -39,6 +46,8 @@ const (
 	translationsPath = "static/translations.json"
 )
 
+// LoadStaticData parses the embedded static-data files once and returns the
+// shared indexed result.
 func LoadStaticData() (*StaticData, error) {
 	staticOnce.Do(func() {
 		staticSet, staticErr = parseStaticData(staticDataBytes, translationsBytes)
@@ -46,6 +55,9 @@ func LoadStaticData() (*StaticData, error) {
 	return staticSet, staticErr
 }
 
+// UpdateStatic downloads the latest ClashKing static-data and translation JSON,
+// writes the embedded source files, and refreshes this client's in-memory
+// StaticData.
 func (c *Client) UpdateStatic(ctx context.Context) error {
 	if err := downloadJSON(ctx, staticDataURL, staticDataPath); err != nil {
 		return err
@@ -142,6 +154,11 @@ func staticLookupKey(name, section, village string) string {
 	return strings.ToLower(fmt.Sprintf("%s|%s|%s", name, section, village))
 }
 
+// LookupByName returns a static-data entry by display name, section, and
+// village.
+//
+// The lookup is case-insensitive. The section should match a top-level static
+// data section such as "troops", "spells", "heroes", "pets", or "equipment".
 func (s *StaticData) LookupByName(name, section, village string) map[string]any {
 	if s == nil {
 		return nil
@@ -149,6 +166,7 @@ func (s *StaticData) LookupByName(name, section, village string) map[string]any 
 	return s.ByName[staticLookupKey(name, section, village)]
 }
 
+// LookupByID returns a static-data entry by numeric static ID.
 func (s *StaticData) LookupByID(id int) map[string]any {
 	if s == nil {
 		return nil

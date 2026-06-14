@@ -89,12 +89,18 @@ func main() {
 	out.WriteString("//go:generate go run ./static/build_constants.go\n\n")
 	out.WriteString("package clashy\n\n")
 	out.WriteString("var (\n")
-	out.WriteString("\tTroopBaseID     = 4000000\n")
-	out.WriteString("\tSpellBaseID     = 26000000\n")
-	out.WriteString("\tHeroBaseID      = 2000000\n")
-	out.WriteString("\tPetBaseID       = 60000000\n")
+	out.WriteString("\t// TroopBaseID is the base static-data ID offset for troops in army links.\n")
+	out.WriteString("\tTroopBaseID = 4000000\n")
+	out.WriteString("\t// SpellBaseID is the base static-data ID offset for spells in army links.\n")
+	out.WriteString("\tSpellBaseID = 26000000\n")
+	out.WriteString("\t// HeroBaseID is the base static-data ID offset for heroes in army links.\n")
+	out.WriteString("\tHeroBaseID = 2000000\n")
+	out.WriteString("\t// PetBaseID is the base static-data ID offset for pets in army links.\n")
+	out.WriteString("\tPetBaseID = 60000000\n")
+	out.WriteString("\t// EquipmentBaseID is the base static-data ID offset for hero equipment in army links.\n")
 	out.WriteString("\tEquipmentBaseID = 30000000\n")
 	for _, list := range lists {
+		fmt.Fprintf(&out, "\t// %s\n", constantDescription(list.name))
 		switch value := list.value.(type) {
 		case string:
 			fmt.Fprintf(&out, "\t%s = %s\n", list.name, value)
@@ -117,6 +123,34 @@ func main() {
 type constantList struct {
 	name  string
 	value any
+}
+
+func constantDescription(name string) string {
+	descriptions := map[string]string{
+		"ElixirTroopOrder":         "ElixirTroopOrder lists regular home-village elixir troops in UI order.",
+		"DarkElixirTroopOrder":     "DarkElixirTroopOrder lists regular home-village dark elixir troops in UI order.",
+		"HomeTroopOrder":           "HomeTroopOrder lists regular home-village troops in UI order.",
+		"SiegeMachineOrder":        "SiegeMachineOrder lists siege machines in UI order.",
+		"SuperTroopOrder":          "SuperTroopOrder lists super troops in UI order.",
+		"HomeTroopOrderWithSieges": "HomeTroopOrderWithSieges lists regular home-village troops followed by siege machines.",
+		"SeasonalTroopOrder":       "SeasonalTroopOrder lists temporary seasonal troops in static-data order.",
+		"BuilderTroopOrder":        "BuilderTroopOrder lists Builder Base troops in UI order.",
+		"ElixirSpellOrder":         "ElixirSpellOrder lists regular elixir spells in UI order.",
+		"DarkElixirSpellOrder":     "DarkElixirSpellOrder lists regular dark elixir spells in UI order.",
+		"SeasonalSpellOrder":       "SeasonalSpellOrder lists temporary seasonal spells in static-data order.",
+		"SpellOrder":               "SpellOrder lists regular spells in UI order.",
+		"HomeBaseHeroOrder":        "HomeBaseHeroOrder lists home-village heroes in unlock order.",
+		"BuilderBaseHeroOrder":     "BuilderBaseHeroOrder lists Builder Base heroes in unlock order.",
+		"HeroOrder":                "HeroOrder lists all heroes in home-village then Builder Base order.",
+		"PetOrder":                 "PetOrder lists hero pets in unlock order.",
+		"EquipmentOrder":           "EquipmentOrder lists hero equipment in static-data order.",
+		"HVBuildingOrder":          "HVBuildingOrder lists home-village buildings in static-data order.",
+		"AchievementOrder":         "AchievementOrder lists achievements in village and UI-priority order.",
+	}
+	if description, ok := descriptions[name]; ok {
+		return description
+	}
+	return name + " is generated from ClashKing static data."
 }
 
 func filter(items []item, keep func(item) bool) []item {

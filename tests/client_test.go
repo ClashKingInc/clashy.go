@@ -256,7 +256,6 @@ func TestMockAPIMetadataAndLeagueEndpoints(t *testing.T) {
 	if location == nil || location.Name != "International" {
 		t.Fatalf("unexpected location: %#v", location)
 	}
-
 	clanLabels, err := client.GetClanLabels(ctx, 3, "", "")
 	if err != nil {
 		t.Fatalf("get clan labels: %v", err)

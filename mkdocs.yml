@@ -1,0 +1,52 @@
+site_name: clashy.go
+site_description: Go SDK for the Clash of Clans API and ClashKing-compatible proxy APIs.
+site_url: https://clashy-go.readthedocs.io/
+repo_url: https://github.com/clashkinginc/clashy.go
+repo_name: clashkinginc/clashy.go
+edit_uri: edit/main/docs/
+
+theme:
+  name: readthedocs
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/api.css
+
+nav:
+  - Home: index.md
+  - Client:
+      - Client Interface: api/client.md
+  - Guides:
+      - Getting Started: guides/getting-started.md
+      - Authentication: guides/authentication.md
+      - Wars and CWL: guides/wars-and-cwl.md
+      - Static Data: guides/static-data.md
+  - Models:
+      - Clans: api/clans.md
+      - Players: api/players.md
+      - Wars: api/wars.md
+      - Raids: api/raids.md
+      - Battle Logs: api/battle-logs.md
+      - Game Objects: api/game-objects.md
+      - Static Data Models: api/static-data.md
+      - Locations And Rankings: api/locations-rankings.md
+      - Constants: api/constants.md
+      - Enums: api/enums.md
+      - Miscellaneous: api/miscellaneous.md
+  - Advanced:
+      - Exceptions: api/exceptions.md
+      - Full gomarkdoc Reference: api/clashy.md
+  - Miscellaneous:
+      - Changelog: changelog.md

@@ -86,25 +86,26 @@ func TestGetSeasonByID(t *testing.T) {
 	}
 }
 
-func TestGetTournamentWindow(t *testing.T) {
-	window := clashy.GetTournamentWindow(time.Date(2026, time.March, 31, 12, 0, 0, 0, time.UTC))
+func TestSeasonHelpers(t *testing.T) {
+	timestamp := time.Date(2026, time.March, 31, 12, 0, 0, 0, time.UTC)
 
-	if window.ID != "2026-03-30" {
-		t.Fatalf("unexpected window id: %s", window.ID)
+	if got := clashy.GenSeasonDate(timestamp); got != "2026-04" {
+		t.Fatalf("unexpected generated season date: %s", got)
 	}
-	if !window.StartTime.Equal(time.Date(2026, time.March, 30, 5, 0, 0, 0, time.UTC)) {
-		t.Fatalf("unexpected start: %s", window.StartTime)
+	if got := clashy.GetSeasonStart(timestamp); !got.Equal(time.Date(2026, time.March, 23, 5, 0, 0, 0, time.UTC)) {
+		t.Fatalf("unexpected season start: %s", got)
 	}
-	if !window.EndTime.Equal(time.Date(2026, time.April, 6, 5, 0, 0, 0, time.UTC)) {
-		t.Fatalf("unexpected end: %s", window.EndTime)
+	if got := clashy.GetSeasonEnd(timestamp); !got.Equal(time.Date(2026, time.April, 20, 5, 0, 0, 0, time.UTC)) {
+		t.Fatalf("unexpected season end: %s", got)
 	}
 }
 
-func TestGetTournamentWindowBeforeMondayReset(t *testing.T) {
-	window := clashy.GetTournamentWindow(time.Date(2026, time.March, 30, 4, 59, 0, 0, time.UTC))
-
-	if window.ID != "2026-03-23" {
-		t.Fatalf("unexpected window id: %s", window.ID)
+func TestGenLegendDate(t *testing.T) {
+	if got := clashy.GenLegendDate(time.Date(2026, time.March, 31, 4, 59, 0, 0, time.UTC)); got != "2026-03-30" {
+		t.Fatalf("unexpected legend date before reset: %s", got)
+	}
+	if got := clashy.GenLegendDate(time.Date(2026, time.March, 31, 5, 0, 0, 0, time.UTC)); got != "2026-03-31" {
+		t.Fatalf("unexpected legend date after reset: %s", got)
 	}
 }
 

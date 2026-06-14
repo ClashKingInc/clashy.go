@@ -22,6 +22,11 @@ type cachedResponse struct {
 	ExpiresAt time.Time
 }
 
+// HTTPClient performs low-level Clash API and developer-site HTTP requests.
+//
+// Most callers should use Client instead. HTTPClient is exported so advanced
+// integrations can build compatible request flows while reusing token rotation,
+// throttling, compression handling, cache storage, and typed error mapping.
 type HTTPClient struct {
 	config ClientConfig
 	client *http.Client
@@ -34,6 +39,7 @@ type HTTPClient struct {
 	next       int
 }
 
+// NewHTTPClient constructs an HTTPClient from cfg.
 func NewHTTPClient(cfg ClientConfig) *HTTPClient {
 	return &HTTPClient{
 		config: cfg,
@@ -43,6 +49,9 @@ func NewHTTPClient(cfg ClientConfig) *HTTPClient {
 	}
 }
 
+// SetTokens replaces the API tokens used for Authorization headers.
+//
+// Tokens are rotated one per request. Passing no tokens clears authentication.
 func (h *HTTPClient) SetTokens(tokens ...string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -61,6 +70,12 @@ func (h *HTTPClient) token() string {
 	return token
 }
 
+// Do sends one HTTP request and returns the response body, status code, retry
+// cache duration in seconds, and error.
+//
+// Non-2xx API responses are converted into the package's typed HTTP errors.
+// Successful GET responses can be read from or written to the in-memory cache
+// depending on RequestOptions.
 func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, options RequestOptions) ([]byte, int, int, error) {
 	ctx = contextOrBackground(ctx)
 	if method == http.MethodGet && options.LookupCache {
@@ -151,12 +166,22 @@ func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, o
 	}
 }
 
+// RequestOptions controls per-request behavior for HTTPClient.Do.
 type RequestOptions struct {
+	// LookupCache allows a GET request to return a fresh cached response.
 	LookupCache bool
+	// UpdateCache allows a successful GET request to store or replace a cached
+	// response.
 	UpdateCache bool
-	SkipAuth    bool
+	// SkipAuth prevents Do from adding an Authorization header.
+	SkipAuth bool
 }
 
+// LoginDeveloper authenticates against the Clash developer site and configures
+// API tokens for subsequent Clash API requests.
+//
+// The method reuses matching keys for the configured IP and key name when
+// possible, creating more keys until ClientConfig.KeyCount is satisfied.
 func (h *HTTPClient) LoginDeveloper(ctx context.Context, email, password string) error {
 	ctx = contextOrBackground(ctx)
 	payload := map[string]string{"email": email, "password": password}

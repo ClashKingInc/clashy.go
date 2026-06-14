@@ -33,6 +33,12 @@ func (l *requestLimiter) Acquire(ctx context.Context) (func(), error) {
 	}
 }
 
+// WithoutRateLimit returns a child context that bypasses the client's request
+// limiter.
+//
+// Use this for trusted internal calls where the caller is already controlling
+// concurrency. It does not disable token rotation, caching, deadlines, or HTTP
+// transport behavior.
 func WithoutRateLimit(ctx context.Context) context.Context {
 	return context.WithValue(contextOrBackground(ctx), rateLimitContextKey{}, true)
 }
