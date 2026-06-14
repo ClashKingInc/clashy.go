@@ -21,17 +21,16 @@ var (
 )
 
 type SeasonWindow struct {
-	SeasonID  string
+	// SeasonID is the season identifier in YYYY-MM form.
+	SeasonID string
+	// StartTime is the inclusive season start time in UTC.
 	StartTime time.Time
-	EndTime   time.Time
+	// EndTime is the exclusive season end time in UTC.
+	EndTime time.Time
 }
 
-type TournamentWindow struct {
-	ID        string
-	StartTime time.Time
-	EndTime   time.Time
-}
-
+// CorrectTag normalizes a Clash tag by trimming whitespace, uppercasing,
+// replacing O with 0, removing invalid characters, and ensuring a leading #.
 func CorrectTag(tag string) string {
 	tag = strings.ToUpper(strings.TrimSpace(tag))
 	tag = strings.ReplaceAll(tag, "O", "0")
@@ -106,14 +105,49 @@ func encodeRealtime(path string, realtime bool) string {
 	return path + sep + url.Values{"realtime": []string{"true"}}.Encode()
 }
 
+// GetSeasonID returns the current trophy season identifier in YYYY-MM form.
 func GetSeasonID() string {
 	return GetSeason(time.Time{}, true).SeasonID
 }
 
+// GenSeasonDate returns the trophy season identifier for timestamp.
+func GenSeasonDate(timestamp time.Time) string {
+	return GetSeason(timestamp, true).SeasonID
+}
+
+// GenLegendDate returns the legend-league day identifier for timestamp.
+//
+// Legend days roll over at 05:00 UTC, so timestamps before that hour map to the
+// previous calendar date.
+func GenLegendDate(timestamp time.Time) string {
+	target := utcNowIfZero(timestamp)
+	if target.Hour() < 5 {
+		target = target.AddDate(0, 0, -1)
+	}
+	return target.Format("2006-01-02")
+}
+
+// GetSeasonStart returns the start time of the trophy season containing
+// timestamp.
+func GetSeasonStart(timestamp time.Time) time.Time {
+	return GetSeason(timestamp, true).StartTime
+}
+
+// GetSeasonEnd returns the end time of the trophy season containing timestamp.
+func GetSeasonEnd(timestamp time.Time) time.Time {
+	return GetSeason(timestamp, true).EndTime
+}
+
+// GetSeason returns the trophy season window containing timestamp.
+//
+// Passing a zero timestamp uses the current UTC time. Before the 2025 season
+// calendar change, seasons end on the last Monday of the month at 05:00 UTC.
+// From the September 2025 transition onward, seasons follow fixed 28 day
+// windows.
 func GetSeason(timestamp time.Time, forward bool) SeasonWindow {
 	target := utcNowIfZero(timestamp)
 
-	if !target.After(seasonCutoffStart) {
+	if target.Before(seasonCutoffStart) {
 		endTime := oldSeasonEnd(target, forward)
 		startTime := oldSeasonStartFromEnd(endTime)
 		return SeasonWindow{
@@ -123,7 +157,7 @@ func GetSeason(timestamp time.Time, forward bool) SeasonWindow {
 		}
 	}
 
-	if !target.After(seasonCutoffEnd) {
+	if target.Before(seasonCutoffEnd) {
 		return SeasonWindow{
 			SeasonID:  "2025-09",
 			StartTime: seasonCutoffStart,
@@ -149,6 +183,7 @@ func GetSeason(timestamp time.Time, forward bool) SeasonWindow {
 	}
 }
 
+// GetSeasonByID returns the trophy season window for a YYYY-MM season ID.
 func GetSeasonByID(seasonID string) (SeasonWindow, error) {
 	if seasonID == "2025-09" {
 		return SeasonWindow{
@@ -185,34 +220,8 @@ func GetSeasonByID(seasonID string) (SeasonWindow, error) {
 	}, nil
 }
 
-func GetTournamentWindow(timestamp time.Time) TournamentWindow {
-	now := utcNowIfZero(timestamp)
-
-	day := int(now.Weekday())
-	hour := now.Hour()
-	daysSinceMonday := (day + 6) % 7
-	if day == int(time.Monday) && hour < 5 {
-		daysSinceMonday = 7
-	}
-
-	lastMonday := time.Date(now.Year(), now.Month(), now.Day()-daysSinceMonday, 5, 0, 0, 0, time.UTC)
-	nextMonday := lastMonday.Add(7 * 24 * time.Hour)
-
-	return TournamentWindow{
-		ID:        lastMonday.Format("2006-01-02"),
-		StartTime: lastMonday,
-		EndTime:   nextMonday,
-	}
-}
-
-func GetTournamentWindowByID(id string) (TournamentWindow, error) {
-	timestamp, err := time.Parse(time.RFC3339, id+"T05:00:00.000Z")
-	if err != nil {
-		return TournamentWindow{}, err
-	}
-	return GetTournamentWindow(timestamp), nil
-}
-
+// GetClanGamesStart returns the Clan Games start time for the month containing
+// timestamp, rolling forward after that month's Clan Games end.
 func GetClanGamesStart(timestamp time.Time) time.Time {
 	t := utcNowIfZero(timestamp)
 	month := t.Month()
@@ -229,6 +238,8 @@ func GetClanGamesStart(timestamp time.Time) time.Time {
 	return time.Date(year, month, 22, 8, 0, 0, 0, time.UTC)
 }
 
+// GetClanGamesEnd returns the Clan Games end time for the month containing
+// timestamp, rolling forward after that month's Clan Games end.
 func GetClanGamesEnd(timestamp time.Time) time.Time {
 	t := utcNowIfZero(timestamp)
 	month := t.Month()
@@ -245,10 +256,14 @@ func GetClanGamesEnd(timestamp time.Time) time.Time {
 	return time.Date(year, month, 28, 8, 0, 0, 0, time.UTC)
 }
 
+// GetRaidWeekendStart returns the start time for the raid weekend containing
+// timestamp.
 func GetRaidWeekendStart(timestamp time.Time) time.Time {
 	return GetRaidWeekendEnd(timestamp).Add(-72 * time.Hour)
 }
 
+// GetRaidWeekendEnd returns the end time for the raid weekend containing
+// timestamp.
 func GetRaidWeekendEnd(timestamp time.Time) time.Time {
 	t := utcNowIfZero(timestamp).Add(-7*time.Hour - time.Microsecond)
 	daysUntilNextMonday := 7 - int(t.Weekday()-time.Monday)

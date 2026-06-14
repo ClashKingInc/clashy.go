@@ -1,62 +1,99 @@
 package clashy
 
+// Role is a member's role inside a clan.
 type Role string
 
 const (
-	RoleMember   Role = "member"
-	RoleElder    Role = "admin"
+	// RoleMember is a regular clan member.
+	RoleMember Role = "member"
+	// RoleElder is a clan elder. The Clash API value is "admin".
+	RoleElder Role = "admin"
+	// RoleCoLeader is a clan co-leader.
 	RoleCoLeader Role = "coLeader"
-	RoleLeader   Role = "leader"
+	// RoleLeader is the clan leader.
+	RoleLeader Role = "leader"
 )
 
+// WarRound identifies the logical CWL round requested from GetCurrentWar or
+// GetLeagueWar.
 type WarRound int
 
 const (
+	// PreviousWar selects the previous completed or in-war CWL round.
 	PreviousWar WarRound = iota
+	// CurrentWar selects the active CWL war, or the latest completed/in-war
+	// round when the latest real round is only preparation.
 	CurrentWar
+	// CurrentPreparation selects the upcoming CWL preparation round when one is
+	// available.
 	CurrentPreparation
 )
 
+// WarState is the lifecycle state of a classic war or CWL war.
 type WarState string
 
 const (
-	WarStateNotInWar    WarState = "notInWar"
+	// WarStateNotInWar means the clan is not in a regular war.
+	WarStateNotInWar WarState = "notInWar"
+	// WarStatePreparation means the war is in preparation day.
 	WarStatePreparation WarState = "preparation"
-	WarStateInWar       WarState = "inWar"
-	WarStateEnded       WarState = "warEnded"
+	// WarStateInWar means battle day is active.
+	WarStateInWar WarState = "inWar"
+	// WarStateEnded means the war has ended.
+	WarStateEnded WarState = "warEnded"
 )
 
+// WarResult is the requested clan's result in a war log entry.
 type WarResult string
 
 const (
-	WarResultWin  WarResult = "win"
+	// WarResultWin means the requested clan won.
+	WarResultWin WarResult = "win"
+	// WarResultLose means the requested clan lost.
 	WarResultLose WarResult = "lose"
-	WarResultTie  WarResult = "tie"
+	// WarResultTie means the war ended in a tie.
+	WarResultTie WarResult = "tie"
 )
 
+// ClanType describes a clan's join policy.
 type ClanType string
 
 const (
-	ClanTypeOpen       ClanType = "open"
-	ClanTypeClosed     ClanType = "closed"
+	// ClanTypeOpen means players can join directly when requirements are met.
+	ClanTypeOpen ClanType = "open"
+	// ClanTypeClosed means the clan is closed to new members.
+	ClanTypeClosed ClanType = "closed"
+	// ClanTypeInviteOnly means players must request or be invited to join.
 	ClanTypeInviteOnly ClanType = "inviteOnly"
 )
 
+// VillageType identifies the village or game area for static data and units.
 type VillageType string
 
 const (
-	VillageHome        VillageType = "home"
+	// VillageHome is the home village.
+	VillageHome VillageType = "home"
+	// VillageBuilderBase is Builder Base.
 	VillageBuilderBase VillageType = "builderBase"
+	// VillageClanCapital is Clan Capital.
 	VillageClanCapital VillageType = "clanCapital"
 )
 
+// LoadGameData describes when static game data should be loaded.
 type LoadGameData struct {
-	Default     bool
+	// Default uses the package's normal embedded static-data behavior.
+	Default bool
+	// StartupOnly indicates static data should be loaded during client
+	// construction only.
 	StartupOnly bool
-	Always      bool
-	Never       bool
+	// Always indicates static data should be refreshed whenever supported by the
+	// caller's workflow.
+	Always bool
+	// Never indicates static data should not be loaded.
+	Never bool
 }
 
+// DefaultLoadGameData returns the default static-data loading policy.
 func DefaultLoadGameData() LoadGameData {
 	return LoadGameData{Default: true}
 }

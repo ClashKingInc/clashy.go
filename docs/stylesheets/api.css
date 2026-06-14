@@ -1,0 +1,106 @@
+.api-signature {
+  border-top: 4px solid #6ab0de;
+  background: #e7f2fa;
+  display: inline-block;
+  margin: 0.4rem 0 1rem;
+  padding: 0.45rem 0.65rem;
+}
+
+.api-function {
+  margin: 2rem 0 2.4rem;
+}
+
+.api-function-signature {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.api-signature code {
+  background: transparent;
+  border: 0;
+  color: #222;
+  font-size: 1.05em;
+  font-weight: 700;
+}
+
+.api-function-signature code {
+  color: #000;
+  font-size: 1.12em;
+  white-space: normal;
+}
+
+.api-param,
+.api-return,
+.api-return-arrow {
+  color: #2980b9;
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.api-return-arrow {
+  font-family: monospace;
+  font-style: normal;
+}
+
+.api-parameters {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  margin: 0.45rem 0 0.45rem 2rem;
+}
+
+.api-parameters dt {
+  font-weight: 700;
+}
+
+.api-parameters dd {
+  margin: 0;
+}
+
+.api-parameters p {
+  margin: 0 0 0.35rem;
+}
+
+.api-kind {
+  color: #2980b9;
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  margin-right: 0.45rem;
+}
+
+.api-field {
+  margin: 1.25rem 0 1.6rem 1.5rem;
+}
+
+.api-field h3,
+.api-field h4 {
+  border-left: 4px solid #d6d6d6;
+  background: #f2f2f2;
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  padding: 0.35rem 0.6rem;
+}
+
+.api-field h3 code,
+.api-field h4 code {
+  background: transparent;
+  border: 0;
+  color: #111;
+}
+
+.api-field p {
+  margin-left: 1.5rem;
+}
+
+.api-json {
+  color: #777;
+  font-size: 0.85em;
+  margin-left: 0.5rem;
+}
+
+.api-field code a,
+.api-signature code a {
+  border-bottom: 1px dotted #2980b9;
+}
