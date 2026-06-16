@@ -16,6 +16,12 @@ type RankedClan struct {
 // RankedPlayer is a player ranking entry.
 type RankedPlayer struct {
 	Player
+	// League is the player's ranking league when the endpoint includes it.
+	League League `json:"league,omitempty"`
+	// AttackWins is the player's attack win count in the ranking.
+	AttackWins int `json:"attackWins,omitempty"`
+	// DefenseWins is the player's defense win count in the ranking.
+	DefenseWins int `json:"defenseWins,omitempty"`
 	// Rank is the current ranking position.
 	Rank int `json:"rank,omitempty"`
 	// PreviousRank is the previous ranking position when the API provides it.

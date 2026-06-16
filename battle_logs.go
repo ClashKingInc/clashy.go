@@ -11,7 +11,7 @@ type Resource struct {
 // BattleLogEntry is one player battle log entry.
 type BattleLogEntry struct {
 	// BattleType describes the game mode for the battle.
-	BattleType string `json:"battleType,omitempty"`
+	BattleType BattleType `json:"battleType,omitempty"`
 	// Attack reports whether the entry is an attack made by the requested
 	// player. False entries are defenses.
 	Attack bool `json:"attack,omitempty"`
@@ -19,6 +19,10 @@ type BattleLogEntry struct {
 	ArmyShareCode string `json:"armyShareCode,omitempty"`
 	// OpponentPlayerTag is the opponent's player tag.
 	OpponentPlayerTag string `json:"opponentPlayerTag,omitempty"`
+	// OpponentName is the opponent's display name.
+	OpponentName string `json:"opponentName,omitempty"`
+	// OpponentTownHallLevel is the opponent's Town Hall level.
+	OpponentTownHallLevel int `json:"opponentTownHallLevel,omitempty"`
 	// Stars is the number of stars earned by the attacker.
 	Stars int `json:"stars,omitempty"`
 	// DestructionPercentage is the destruction percentage earned by the attacker.
@@ -29,6 +33,10 @@ type BattleLogEntry struct {
 	ExtraLootedResources []Resource `json:"extraLootedResources,omitempty"`
 	// AvailableLoot contains resources that were available before the battle.
 	AvailableLoot []Resource `json:"availableLoot,omitempty"`
+	// Duration is the battle duration in seconds.
+	Duration int `json:"battleTime,omitempty"`
+	// Timestamp is the API timestamp for when the battle happened.
+	Timestamp string `json:"battleTimestamp,omitempty"`
 	responseMeta
 }
 

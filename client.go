@@ -810,12 +810,12 @@ func (c *Client) GetPlayerLeagueHistory(ctx context.Context, playerTag string) (
 	return response.Items, err
 }
 
-// GetPlayerLeagueGroup fetches a legend league group and scopes it to a player.
-func (c *Client) GetPlayerLeagueGroup(ctx context.Context, playerTag, leagueGroupTag string, leagueSeasonID int) (*LeagueTierGroup, error) {
+// GetPlayerLeagueGroup fetches a ranked group and scopes it to a player.
+func (c *Client) GetPlayerLeagueGroup(ctx context.Context, playerTag, leagueGroupTag, leagueSeasonID string) (*LeagueTierGroup, error) {
 	var group LeagueTierGroup
 	values := make(url.Values)
 	values.Set("playerTag", CorrectTag(playerTag))
-	path := "/leaguegroup/" + encodeTag(leagueGroupTag) + "/" + strconv.Itoa(leagueSeasonID)
+	path := "/leaguegroup/" + encodeTag(leagueGroupTag) + "/" + url.PathEscape(leagueSeasonID)
 	if encoded := values.Encode(); encoded != "" {
 		path += "?" + encoded
 	}

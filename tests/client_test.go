@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -157,7 +158,7 @@ func TestMockAPIPlayerEndpoints(t *testing.T) {
 		t.Fatalf("unexpected player league history: %#v", history)
 	}
 
-	currentGroup, err := client.GetPlayerLeagueGroup(ctx, player.Tag, player.CurrentLeagueGroupTag, player.CurrentLeagueSeasonID)
+	currentGroup, err := client.GetPlayerLeagueGroup(ctx, player.Tag, player.CurrentLeagueGroupTag, strconv.Itoa(player.CurrentLeagueSeasonID))
 	if err != nil {
 		t.Fatalf("get current player league group: %v", err)
 	}
@@ -165,7 +166,7 @@ func TestMockAPIPlayerEndpoints(t *testing.T) {
 		t.Fatalf("unexpected current player league group: %#v", currentGroup)
 	}
 
-	previousGroup, err := client.GetPlayerLeagueGroup(ctx, player.Tag, player.PreviousLeagueGroupTag, player.PreviousLeagueSeasonID)
+	previousGroup, err := client.GetPlayerLeagueGroup(ctx, player.Tag, player.PreviousLeagueGroupTag, strconv.Itoa(player.PreviousLeagueSeasonID))
 	if err != nil {
 		t.Fatalf("get previous player league group: %v", err)
 	}

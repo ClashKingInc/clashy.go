@@ -55,6 +55,18 @@ const (
 	WarResultTie WarResult = "tie"
 )
 
+// BattleType describes the game mode for a player battle log entry.
+type BattleType string
+
+const (
+	// BattleTypeHomeVillage is a home-village battle log entry.
+	BattleTypeHomeVillage BattleType = "HOME_VILLAGE"
+	// BattleTypeRanked is a ranked battle log entry.
+	BattleTypeRanked BattleType = "RANKED"
+	// BattleTypeLegend is a Legend League battle log entry.
+	BattleTypeLegend BattleType = "LEGEND"
+)
+
 // ClanType describes a clan's join policy.
 type ClanType string
 

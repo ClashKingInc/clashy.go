@@ -1191,16 +1191,16 @@ GetPlayerLabels fetches player labels with optional pagination.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetPlayerLeagueGroup(<span class="api-param">ctx: context.Context</span>, <span class="api-param">playerTag: string</span>, <span class="api-param">leagueGroupTag: string</span>, <span class="api-param">leagueSeasonID: int</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">*LeagueTierGroup</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetPlayerLeagueGroup(<span class="api-param">ctx: context.Context</span>, <span class="api-param">playerTag: string</span>, <span class="api-param">leagueGroupTag: string</span>, <span class="api-param">leagueSeasonID: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">*LeagueTierGroup</span>, <span class="api-return">error</span>)</code></p>
 
-GetPlayerLeagueGroup fetches a legend league group and scopes it to a player.
+GetPlayerLeagueGroup fetches a ranked group and scopes it to a player.
 
 <dl class="api-parameters">
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>playerTag</strong> (<code>string</code>)</p>
 <p><strong>leagueGroupTag</strong> (<code>string</code>)</p>
-<p><strong>leagueSeasonID</strong> (<code>int</code>)</p>
+<p><strong>leagueSeasonID</strong> (<code>string</code>)</p>
 </dd>
 </dl>
 

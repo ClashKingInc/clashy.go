@@ -127,7 +127,7 @@ type League struct {
 
 // Season describes one ranked season placement.
 type Season struct {
-	// ID is the season identifier, usually YYYY-MM.
+	// ID is the season identifier returned by the API.
 	ID string `json:"id"`
 	// Rank is the player's season rank.
 	Rank int `json:"rank"`

@@ -156,7 +156,7 @@ type ClanWarLeagueClan struct {
 type ClanWarLeagueGroup struct {
 	// State is the group state returned by the API.
 	State string `json:"state,omitempty"`
-	// Season is the CWL season identifier.
+	// Season is the CWL season identifier returned by the API.
 	Season string `json:"season,omitempty"`
 	// Clans contains the clans participating in the group.
 	Clans []ClanWarLeagueClan `json:"clans,omitempty"`

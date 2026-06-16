@@ -37,6 +37,7 @@ The package also embeds ClashKing static game data. Static helpers resolve troop
 - [type Badge](<#Badge>)
   - [func \(b Badge\) URL\(\) string](<#Badge.URL>)
 - [type BattleLogEntry](<#BattleLogEntry>)
+- [type BattleType](<#BattleType>)
 - [type CapitalDistrict](<#CapitalDistrict>)
 - [type ChatLanguage](<#ChatLanguage>)
 - [type Clan](<#Clan>)
@@ -90,7 +91,7 @@ The package also embeds ClashKing static game data. Static helpers resolve troop
   - [func \(c \*Client\) GetPet\(name string, level int\) \*Pet](<#Client.GetPet>)
   - [func \(c \*Client\) GetPlayer\(ctx context.Context, tag string\) \(\*Player, error\)](<#Client.GetPlayer>)
   - [func \(c \*Client\) GetPlayerLabels\(ctx context.Context, limit int, before, after string\) \(\[\]Label, error\)](<#Client.GetPlayerLabels>)
-  - [func \(c \*Client\) GetPlayerLeagueGroup\(ctx context.Context, playerTag, leagueGroupTag string, leagueSeasonID int\) \(\*LeagueTierGroup, error\)](<#Client.GetPlayerLeagueGroup>)
+  - [func \(c \*Client\) GetPlayerLeagueGroup\(ctx context.Context, playerTag, leagueGroupTag, leagueSeasonID string\) \(\*LeagueTierGroup, error\)](<#Client.GetPlayerLeagueGroup>)
   - [func \(c \*Client\) GetPlayerLeagueHistory\(ctx context.Context, playerTag string\) \(\[\]LeagueHistoryEntry, error\)](<#Client.GetPlayerLeagueHistory>)
   - [func \(c \*Client\) GetRaidLog\(ctx context.Context, clanTag string, limit int, after, before string\) \(\[\]RaidLogEntry, error\)](<#Client.GetRaidLog>)
   - [func \(c \*Client\) GetSeasonRankings\(ctx context.Context, leagueID int, seasonID string\) \(\[\]RankedPlayer, error\)](<#Client.GetSeasonRankings>)
@@ -257,6 +258,7 @@ var (
         "Ice Golem",
         "Headhunter",
         "Apprentice Warden",
+        "Ruin Witch",
         "Druid",
         "Furnace",
     }
@@ -365,6 +367,7 @@ var (
         "Bat Spell",
         "Overgrowth Spell",
         "Ice Block Spell",
+        "Angry Spell",
     }
     // SeasonalSpellOrder lists temporary seasonal spells in static-data order.
     SeasonalSpellOrder = []string{
@@ -422,6 +425,7 @@ var (
         "Rocket Spear",
         "Spiky Ball",
         "Frozen Arrow",
+        "Monolith Arrow",
         "Giant Arrow",
         "Heroic Torch",
         "Healer Puppet",
@@ -598,7 +602,7 @@ func main() {
 </details>
 
 <a name="FromTimestamp"></a>
-## func [FromTimestamp](<https://github.com/ClashKingInc/clashy.go/blob/main/response.go#L49>)
+## func [FromTimestamp](<https://github.com/ClashKingInc/clashy.go/blob/main/response.go#L55>)
 
 ```go
 func FromTimestamp(raw string) (time.Time, error)
@@ -722,7 +726,7 @@ func ParseAccountData(data map[string]any) AccountData
 ParseAccountData wraps account\-link data without mutating it.
 
 <a name="Achievement"></a>
-## type [Achievement](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L84-L99>)
+## type [Achievement](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L85-L100>)
 
 Achievement describes one player achievement and its current progress.
 
@@ -815,7 +819,7 @@ func main() {
 </details>
 
 <a name="Badge"></a>
-## type [Badge](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L53-L60>)
+## type [Badge](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L54-L61>)
 
 Badge contains the common small, medium, and large image URLs for clan badges.
 
@@ -831,7 +835,7 @@ type Badge struct {
 ```
 
 <a name="Badge.URL"></a>
-### func \(Badge\) [URL](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L63>)
+### func \(Badge\) [URL](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L64>)
 
 ```go
 func (b Badge) URL() string
@@ -840,14 +844,14 @@ func (b Badge) URL() string
 URL returns the preferred badge URL, choosing medium, then large, then small.
 
 <a name="BattleLogEntry"></a>
-## type [BattleLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L12-L33>)
+## type [BattleLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L12-L41>)
 
 BattleLogEntry is one player battle log entry.
 
 ```go
 type BattleLogEntry struct {
     // BattleType describes the game mode for the battle.
-    BattleType string `json:"battleType,omitempty"`
+    BattleType BattleType `json:"battleType,omitempty"`
     // Attack reports whether the entry is an attack made by the requested
     // player. False entries are defenses.
     Attack bool `json:"attack,omitempty"`
@@ -855,6 +859,10 @@ type BattleLogEntry struct {
     ArmyShareCode string `json:"armyShareCode,omitempty"`
     // OpponentPlayerTag is the opponent's player tag.
     OpponentPlayerTag string `json:"opponentPlayerTag,omitempty"`
+    // OpponentName is the opponent's display name.
+    OpponentName string `json:"opponentName,omitempty"`
+    // OpponentTownHallLevel is the opponent's Town Hall level.
+    OpponentTownHallLevel int `json:"opponentTownHallLevel,omitempty"`
     // Stars is the number of stars earned by the attacker.
     Stars int `json:"stars,omitempty"`
     // DestructionPercentage is the destruction percentage earned by the attacker.
@@ -865,12 +873,38 @@ type BattleLogEntry struct {
     ExtraLootedResources []Resource `json:"extraLootedResources,omitempty"`
     // AvailableLoot contains resources that were available before the battle.
     AvailableLoot []Resource `json:"availableLoot,omitempty"`
+    // Duration is the battle duration in seconds.
+    Duration int `json:"battleTime,omitempty"`
+    // Timestamp is the API timestamp for when the battle happened.
+    Timestamp string `json:"battleTimestamp,omitempty"`
     // contains filtered or unexported fields
 }
 ```
 
+<a name="BattleType"></a>
+## type [BattleType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L59>)
+
+BattleType describes the game mode for a player battle log entry.
+
+```go
+type BattleType string
+```
+
+<a name="BattleTypeHomeVillage"></a>
+
+```go
+const (
+    // BattleTypeHomeVillage is a home-village battle log entry.
+    BattleTypeHomeVillage BattleType = "HOME_VILLAGE"
+    // BattleTypeRanked is a ranked battle log entry.
+    BattleTypeRanked BattleType = "RANKED"
+    // BattleTypeLegend is a Legend League battle log entry.
+    BattleTypeLegend BattleType = "LEGEND"
+)
+```
+
 <a name="CapitalDistrict"></a>
-## type [CapitalDistrict](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L163-L176>)
+## type [CapitalDistrict](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L164-L177>)
 
 CapitalDistrict describes a clan capital district from clan and raid data.
 
@@ -892,7 +926,7 @@ type CapitalDistrict struct {
 ```
 
 <a name="ChatLanguage"></a>
-## type [ChatLanguage](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L179-L186>)
+## type [ChatLanguage](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L180-L187>)
 
 ChatLanguage describes the preferred language configured for a clan.
 
@@ -1051,7 +1085,7 @@ type ClanMember struct {
 ```
 
 <a name="ClanType"></a>
-## type [ClanType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L59>)
+## type [ClanType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L71>)
 
 ClanType describes a clan's join policy.
 
@@ -1153,7 +1187,7 @@ ClanWarLeagueGroup is the current CWL group for a clan.
 type ClanWarLeagueGroup struct {
     // State is the group state returned by the API.
     State string `json:"state,omitempty"`
-    // Season is the CWL season identifier.
+    // Season is the CWL season identifier returned by the API.
     Season string `json:"season,omitempty"`
     // Clans contains the clans participating in the group.
     Clans []ClanWarLeagueClan `json:"clans,omitempty"`
@@ -1609,10 +1643,10 @@ GetPlayerLabels fetches player labels with optional pagination.
 ### func \(\*Client\) [GetPlayerLeagueGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L814>)
 
 ```go
-func (c *Client) GetPlayerLeagueGroup(ctx context.Context, playerTag, leagueGroupTag string, leagueSeasonID int) (*LeagueTierGroup, error)
+func (c *Client) GetPlayerLeagueGroup(ctx context.Context, playerTag, leagueGroupTag, leagueSeasonID string) (*LeagueTierGroup, error)
 ```
 
-GetPlayerLeagueGroup fetches a legend league group and scopes it to a player.
+GetPlayerLeagueGroup fetches a ranked group and scopes it to a player.
 
 <a name="Client.GetPlayerLeagueHistory"></a>
 ### func \(\*Client\) [GetPlayerLeagueHistory](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L805>)
@@ -1949,7 +1983,7 @@ type GatewayError struct{ *HTTPException }
 ```
 
 <a name="GoldPassSeason"></a>
-## type [GoldPassSeason](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L189-L195>)
+## type [GoldPassSeason](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L190-L196>)
 
 GoldPassSeason describes the current Gold Pass season.
 
@@ -2096,7 +2130,7 @@ type HeroLoadout struct {
 ```
 
 <a name="Icon"></a>
-## type [Icon](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L74-L81>)
+## type [Icon](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L75-L82>)
 
 Icon contains small icon URLs returned for leagues and labels.
 
@@ -2130,7 +2164,7 @@ type InvalidCredentials struct{ *HTTPException }
 ```
 
 <a name="Label"></a>
-## type [Label](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L152-L160>)
+## type [Label](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L153-L161>)
 
 Label is a player or clan label.
 
@@ -2147,7 +2181,7 @@ type Label struct {
 ```
 
 <a name="League"></a>
-## type [League](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L117-L125>)
+## type [League](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L118-L126>)
 
 League is a league, war league, builder\-base league, or capital league.
 
@@ -2164,7 +2198,7 @@ type League struct {
 ```
 
 <a name="LeagueHistoryEntry"></a>
-## type [LeagueHistoryEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L36-L60>)
+## type [LeagueHistoryEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L44-L68>)
 
 LeagueHistoryEntry is one historical legend\-league season result.
 
@@ -2197,7 +2231,7 @@ type LeagueHistoryEntry struct {
 ```
 
 <a name="LeagueTierGroup"></a>
-## type [LeagueTierGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L101-L109>)
+## type [LeagueTierGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L109-L117>)
 
 LeagueTierGroup contains members and battle logs for a legend league group.
 
@@ -2214,7 +2248,7 @@ type LeagueTierGroup struct {
 ```
 
 <a name="LeagueTierGroupBattleLogEntry"></a>
-## type [LeagueTierGroupBattleLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L63-L76>)
+## type [LeagueTierGroupBattleLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L71-L84>)
 
 LeagueTierGroupBattleLogEntry is one attack or defense inside a legend group.
 
@@ -2236,7 +2270,7 @@ type LeagueTierGroupBattleLogEntry struct {
 ```
 
 <a name="LeagueTierGroupMember"></a>
-## type [LeagueTierGroupMember](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L79-L98>)
+## type [LeagueTierGroupMember](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L87-L106>)
 
 LeagueTierGroupMember is one player in a legend league group.
 
@@ -2264,7 +2298,7 @@ type LeagueTierGroupMember struct {
 ```
 
 <a name="LegendStatistics"></a>
-## type [LegendStatistics](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L138-L149>)
+## type [LegendStatistics](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L139-L150>)
 
 LegendStatistics contains a player's legend trophies and season snapshots.
 
@@ -2284,7 +2318,7 @@ type LegendStatistics struct {
 ```
 
 <a name="LoadGameData"></a>
-## type [LoadGameData](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L83-L94>)
+## type [LoadGameData](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L95-L106>)
 
 LoadGameData describes when static game data should be loaded.
 
@@ -2304,7 +2338,7 @@ type LoadGameData struct {
 ```
 
 <a name="DefaultLoadGameData"></a>
-### func [DefaultLoadGameData](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L97>)
+### func [DefaultLoadGameData](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L109>)
 
 ```go
 func DefaultLoadGameData() LoadGameData
@@ -2313,7 +2347,7 @@ func DefaultLoadGameData() LoadGameData
 DefaultLoadGameData returns the default static\-data loading policy.
 
 <a name="Location"></a>
-## type [Location](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L102-L114>)
+## type [Location](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L103-L115>)
 
 Location is a country or global location used by ranking endpoints.
 
@@ -2534,7 +2568,7 @@ type PlayerClan struct {
 ```
 
 <a name="PlayerHouseElement"></a>
-## type [PlayerHouseElement](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L198-L203>)
+## type [PlayerHouseElement](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L199-L204>)
 
 PlayerHouseElement is one cosmetic element of a player's house.
 
@@ -2740,13 +2774,19 @@ type RankedClan struct {
 ```
 
 <a name="RankedPlayer"></a>
-## type [RankedPlayer](<https://github.com/ClashKingInc/clashy.go/blob/main/response.go#L17-L23>)
+## type [RankedPlayer](<https://github.com/ClashKingInc/clashy.go/blob/main/response.go#L17-L29>)
 
 RankedPlayer is a player ranking entry.
 
 ```go
 type RankedPlayer struct {
     Player
+    // League is the player's ranking league when the endpoint includes it.
+    League League `json:"league,omitempty"`
+    // AttackWins is the player's attack win count in the ranking.
+    AttackWins int `json:"attackWins,omitempty"`
+    // DefenseWins is the player's defense win count in the ranking.
+    DefenseWins int `json:"defenseWins,omitempty"`
     // Rank is the current ranking position.
     Rank int `json:"rank,omitempty"`
     // PreviousRank is the previous ranking position when the API provides it.
@@ -2844,13 +2884,13 @@ type SearchClansRequest struct {
 ```
 
 <a name="Season"></a>
-## type [Season](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L128-L135>)
+## type [Season](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L129-L136>)
 
 Season describes one ranked season placement.
 
 ```go
 type Season struct {
-    // ID is the season identifier, usually YYYY-MM.
+    // ID is the season identifier returned by the API.
     ID  string `json:"id"`
     // Rank is the player's season rank.
     Rank int `json:"rank"`
@@ -3050,9 +3090,9 @@ type StaticUnit struct {
 ```
 
 <a name="TimeDelta"></a>
-## type [TimeDelta](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L47-L50>)
+## type [TimeDelta](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L48-L51>)
 
-TimeDelta wraps a duration for coc.py\-style helper compatibility.
+TimeDelta represents an elapsed duration.
 
 ```go
 type TimeDelta struct {
@@ -3062,14 +3102,15 @@ type TimeDelta struct {
 ```
 
 <a name="Timestamp"></a>
-## type [Timestamp](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L9-L15>)
+## type [Timestamp](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L9-L16>)
 
 Timestamp stores both the raw Clash API timestamp string and its parsed time.
 
 ```go
 type Timestamp struct {
-    // RawTime is the original API timestamp, usually in 20060102T150405.000Z
-    // format.
+    // RawTime is the original API timestamp.
+    //
+    //	20060102T150405.000Z
     RawTime string
     // Time is the parsed UTC time.
     Time time.Time
@@ -3077,7 +3118,7 @@ type Timestamp struct {
 ```
 
 <a name="Timestamp.After"></a>
-### func \(Timestamp\) [After](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L44>)
+### func \(Timestamp\) [After](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L45>)
 
 ```go
 func (t Timestamp) After(other Timestamp) bool
@@ -3086,7 +3127,7 @@ func (t Timestamp) After(other Timestamp) bool
 After reports whether this timestamp occurs after another timestamp.
 
 <a name="Timestamp.Before"></a>
-### func \(Timestamp\) [Before](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L41>)
+### func \(Timestamp\) [Before](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L42>)
 
 ```go
 func (t Timestamp) Before(other Timestamp) bool
@@ -3095,7 +3136,7 @@ func (t Timestamp) Before(other Timestamp) bool
 Before reports whether this timestamp occurs before another timestamp.
 
 <a name="Timestamp.SecondsUntil"></a>
-### func \(Timestamp\) [SecondsUntil](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L33>)
+### func \(Timestamp\) [SecondsUntil](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L34>)
 
 ```go
 func (t Timestamp) SecondsUntil() int
@@ -3104,7 +3145,7 @@ func (t Timestamp) SecondsUntil() int
 SecondsUntil returns the number of whole seconds from now until the timestamp.
 
 <a name="Timestamp.UnmarshalJSON"></a>
-### func \(\*Timestamp\) [UnmarshalJSON](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L18>)
+### func \(\*Timestamp\) [UnmarshalJSON](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L19>)
 
 ```go
 func (t *Timestamp) UnmarshalJSON(data []byte) error
@@ -3113,7 +3154,7 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error
 UnmarshalJSON parses Clash API timestamp strings into Timestamp values.
 
 <a name="Translation"></a>
-## type [Translation](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L206-L213>)
+## type [Translation](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L207-L214>)
 
 Translation contains one static\-data translation entry.
 
@@ -3129,7 +3170,7 @@ type Translation struct {
 ```
 
 <a name="Translation.UnmarshalJSON"></a>
-### func \(\*Translation\) [UnmarshalJSON](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L216>)
+### func \(\*Translation\) [UnmarshalJSON](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L217>)
 
 ```go
 func (t *Translation) UnmarshalJSON(data []byte) error
@@ -3210,7 +3251,7 @@ type TroopCount struct {
 ```
 
 <a name="VillageType"></a>
-## type [VillageType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L71>)
+## type [VillageType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L83>)
 
 VillageType identifies the village or game area for static data and units.
 

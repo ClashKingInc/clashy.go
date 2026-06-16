@@ -14,7 +14,7 @@ BattleLogEntry is one player battle log entry.
 
 ### `BattleType`
 
-<p><code>string</code> <span class="api-json">json: battleType</span></p>
+<p><code><a href="../clashy/#battletype">BattleType</a></code> <span class="api-json">json: battleType</span></p>
 
 BattleType describes the game mode for the battle.
 
@@ -48,6 +48,26 @@ ArmyShareCode is the in-game army share payload when available.
 <p><code>string</code> <span class="api-json">json: opponentPlayerTag</span></p>
 
 OpponentPlayerTag is the opponent's player tag.
+
+</div>
+
+<div class="api-field" id="battlelogentry-opponentname" markdown="1">
+
+### `OpponentName`
+
+<p><code>string</code> <span class="api-json">json: opponentName</span></p>
+
+OpponentName is the opponent's display name.
+
+</div>
+
+<div class="api-field" id="battlelogentry-opponenttownhalllevel" markdown="1">
+
+### `OpponentTownHallLevel`
+
+<p><code>int</code> <span class="api-json">json: opponentTownHallLevel</span></p>
+
+OpponentTownHallLevel is the opponent's Town Hall level.
 
 </div>
 
@@ -98,6 +118,26 @@ ExtraLootedResources contains bonus resources awarded by the battle.
 <p><code>[]<a href="#resource">Resource</a></code> <span class="api-json">json: availableLoot</span></p>
 
 AvailableLoot contains resources that were available before the battle.
+
+</div>
+
+<div class="api-field" id="battlelogentry-duration" markdown="1">
+
+### `Duration`
+
+<p><code>int</code> <span class="api-json">json: battleTime</span></p>
+
+Duration is the battle duration in seconds.
+
+</div>
+
+<div class="api-field" id="battlelogentry-timestamp" markdown="1">
+
+### `Timestamp`
+
+<p><code>string</code> <span class="api-json">json: battleTimestamp</span></p>
+
+Timestamp is the API timestamp for when the battle happened.
 
 </div>
 

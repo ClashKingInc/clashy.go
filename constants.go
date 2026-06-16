@@ -49,6 +49,7 @@ var (
 		"Ice Golem",
 		"Headhunter",
 		"Apprentice Warden",
+		"Ruin Witch",
 		"Druid",
 		"Furnace",
 	}
@@ -157,6 +158,7 @@ var (
 		"Bat Spell",
 		"Overgrowth Spell",
 		"Ice Block Spell",
+		"Angry Spell",
 	}
 	// SeasonalSpellOrder lists temporary seasonal spells in static-data order.
 	SeasonalSpellOrder = []string{
@@ -214,6 +216,7 @@ var (
 		"Rocket Spear",
 		"Spiky Ball",
 		"Frozen Arrow",
+		"Monolith Arrow",
 		"Giant Arrow",
 		"Heroic Torch",
 		"Healer Puppet",

@@ -214,6 +214,7 @@ func (h *HTTPClient) LoginDeveloper(ctx context.Context, email, password string)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("developer-site login failed with %d", resp.StatusCode)
 	}
+	loginCookies := resp.Cookies()
 
 	var loginResponse struct {
 		TemporaryAPIToken string `json:"temporaryAPIToken"`
@@ -227,7 +228,7 @@ func (h *HTTPClient) LoginDeveloper(ctx context.Context, email, password string)
 	}
 
 	type devKey struct {
-		ID         int      `json:"id"`
+		ID         string   `json:"id"`
 		Name       string   `json:"name"`
 		CIDRRanges []string `json:"cidrRanges"`
 		Key        string   `json:"key"`
@@ -235,7 +236,7 @@ func (h *HTTPClient) LoginDeveloper(ctx context.Context, email, password string)
 	var keysResp struct {
 		Keys []devKey `json:"keys"`
 	}
-	if err := h.developerJSON(ctx, "/api/apikey/list", nil, &keysResp); err != nil {
+	if err := h.developerJSON(ctx, "/api/apikey/list", nil, &keysResp, loginCookies); err != nil {
 		return err
 	}
 
@@ -261,7 +262,7 @@ func (h *HTTPClient) LoginDeveloper(ctx context.Context, email, password string)
 			"cidrRanges":  []string{ip},
 			"scopes":      []string{"clash"},
 		}
-		if err := h.developerJSON(ctx, "/api/apikey/create", body, &createResp); err != nil {
+		if err := h.developerJSON(ctx, "/api/apikey/create", body, &createResp, loginCookies); err != nil {
 			return err
 		}
 		tokens = append(tokens, createResp.Key.Key)
@@ -296,7 +297,7 @@ func decodedBodyReader(resp *http.Response) (io.ReadCloser, error) {
 	}
 }
 
-func (h *HTTPClient) developerJSON(ctx context.Context, path string, reqBody any, out any) error {
+func (h *HTTPClient) developerJSON(ctx context.Context, path string, reqBody any, out any, cookies []*http.Cookie) error {
 	var reader io.Reader
 	if reqBody != nil {
 		payload, err := json.Marshal(reqBody)
@@ -310,8 +311,14 @@ func (h *HTTPClient) developerJSON(ctx context.Context, path string, reqBody any
 		return err
 	}
 	req.Header.Set("Accept", "application/json")
+	if h.config.DeveloperUserAgent != "" {
+		req.Header.Set("User-Agent", h.config.DeveloperUserAgent)
+	}
 	if reqBody != nil {
 		req.Header.Set("Content-Type", "application/json")
+	}
+	for _, cookie := range cookies {
+		req.AddCookie(cookie)
 	}
 	resp, err := h.client.Do(req)
 	if err != nil {

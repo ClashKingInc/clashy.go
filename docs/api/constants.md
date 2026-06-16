@@ -36,7 +36,7 @@ BuilderTroopOrder lists Builder Base troops in UI order.
 
 ### `DarkElixirSpellOrder`
 
-<p><code>[]string{"Poison Spell", "Earthquake Spell", "Haste Spell", "Skeleton Spell", "Bat Spell", "Overgrowth Spell", "Ice Block Spell"}</code></p>
+<p><code>[]string{"Poison Spell", "Earthquake Spell", "Haste Spell", "Skeleton Spell", "Bat Spell", "Overgrowth Spell", "Ice Block Spell", "Angry Spell"}</code></p>
 
 DarkElixirSpellOrder lists regular dark elixir spells in UI order.
 
@@ -46,7 +46,7 @@ DarkElixirSpellOrder lists regular dark elixir spells in UI order.
 
 ### `DarkElixirTroopOrder`
 
-<p><code>[]string{"Minion", "Hog Rider", "Valkyrie", "Golem", "Witch", "Lava Hound", "Bowler", "Ice Golem", "Headhunter", "Apprentice Warden", "Druid", "Furnace"}</code></p>
+<p><code>[]string{"Minion", "Hog Rider", "Valkyrie", "Golem", "Witch", "Lava Hound", "Bowler", "Ice Golem", "Headhunter", "Apprentice Warden", "Ruin Witch", "Druid", "Furnace"}</code></p>
 
 DarkElixirTroopOrder lists regular home-village dark elixir troops in UI order.
 
@@ -86,7 +86,7 @@ EquipmentBaseID is the base static-data ID offset for hero equipment in army lin
 
 ### `EquipmentOrder`
 
-<p><code>[]string{"Barbarian Puppet", "Rage Vial", "Archer Puppet", "Invisibility Vial", "Eternal Tome", "Life Gem", "Seeking Shield", "Royal Gem", "Earthquake Boots", "Hog Rider Puppet", "Giant Gauntlet", "Vampstache", "Haste Vial", "Rocket Spear", "Spiky Ball", "Frozen Arrow", "Giant Arrow", "Heroic Torch", "Healer Puppet", "Fireball", "Rage Gem", "Snake Bracelet", "Healing Tome", "Dark Crown", "Magic Mirror", "Electro Boots", "Lavaloon Puppet", "Henchmen Puppet", "Dark Orb", "Metal Pants", "Noble Iron", "Action Figure", "Meteor Staff", "Frost Flake", "Stick Horse", "Fire Heart", "Rocket Backpack", "Stun Blaster", "Flame Blower", "Electro Fangs"}</code></p>
+<p><code>[]string{"Barbarian Puppet", "Rage Vial", "Archer Puppet", "Invisibility Vial", "Eternal Tome", "Life Gem", "Seeking Shield", "Royal Gem", "Earthquake Boots", "Hog Rider Puppet", "Giant Gauntlet", "Vampstache", "Haste Vial", "Rocket Spear", "Spiky Ball", "Frozen Arrow", "Monolith Arrow", "Giant Arrow", "Heroic Torch", "Healer Puppet", "Fireball", "Rage Gem", "Snake Bracelet", "Healing Tome", "Dark Crown", "Magic Mirror", "Electro Boots", "Lavaloon Puppet", "Henchmen Puppet", "Dark Orb", "Metal Pants", "Noble Iron", "Action Figure", "Meteor Staff", "Frost Flake", "Stick Horse", "Fire Heart", "Rocket Backpack", "Stun Blaster", "Flame Blower", "Electro Fangs"}</code></p>
 
 EquipmentOrder lists hero equipment in static-data order.
 

@@ -473,7 +473,7 @@ State is the group state returned by the API.
 
 <p><code>string</code> <span class="api-json">json: season</span></p>
 
-Season is the CWL season identifier.
+Season is the CWL season identifier returned by the API.
 
 </div>
 
