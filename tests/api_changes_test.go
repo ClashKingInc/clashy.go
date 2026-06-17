@@ -91,3 +91,37 @@ func TestRankingAndWarPatchFieldsDecode(t *testing.T) {
 		t.Fatalf("duration = %d, want 179", got)
 	}
 }
+
+func TestBattleModifierDecodesAndFormats(t *testing.T) {
+	t.Parallel()
+
+	cases := map[clashy.BattleModifier]string{
+		clashy.BattleModifierNone:       "None",
+		clashy.BattleModifierHardMode:   "Hard Mode",
+		clashy.BattleModifierMinusOne:   "Minus One",
+		clashy.BattleModifierMinusTwo:   "Minus Two",
+		clashy.BattleModifierMinusThree: "Minus Three",
+		"":                              "None",
+	}
+	for modifier, want := range cases {
+		if got := modifier.InGameName(); got != want {
+			t.Fatalf("%q InGameName = %q, want %q", modifier, got, want)
+		}
+	}
+
+	var war clashy.ClanWar
+	if err := json.Unmarshal([]byte(`{"battleModifier":"hardMode"}`), &war); err != nil {
+		t.Fatalf("unmarshal clan war battle modifier: %v", err)
+	}
+	if war.BattleModifier != clashy.BattleModifierHardMode {
+		t.Fatalf("war battle modifier = %q, want %q", war.BattleModifier, clashy.BattleModifierHardMode)
+	}
+
+	var entry clashy.ClanWarLogEntry
+	if err := json.Unmarshal([]byte(`{"battleModifier":"minusThree"}`), &entry); err != nil {
+		t.Fatalf("unmarshal war log battle modifier: %v", err)
+	}
+	if entry.BattleModifier != clashy.BattleModifierMinusThree {
+		t.Fatalf("war log battle modifier = %q, want %q", entry.BattleModifier, clashy.BattleModifierMinusThree)
+	}
+}

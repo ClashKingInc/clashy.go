@@ -37,6 +37,8 @@ The package also embeds ClashKing static game data. Static helpers resolve troop
 - [type Badge](<#Badge>)
   - [func \(b Badge\) URL\(\) string](<#Badge.URL>)
 - [type BattleLogEntry](<#BattleLogEntry>)
+- [type BattleModifier](<#BattleModifier>)
+  - [func \(m BattleModifier\) InGameName\(\) string](<#BattleModifier.InGameName>)
 - [type BattleType](<#BattleType>)
 - [type CapitalDistrict](<#CapitalDistrict>)
 - [type ChatLanguage](<#ChatLanguage>)
@@ -881,6 +883,41 @@ type BattleLogEntry struct {
 }
 ```
 
+<a name="BattleModifier"></a>
+## type [BattleModifier](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L71>)
+
+BattleModifier describes the modifier applied to a war battle.
+
+```go
+type BattleModifier string
+```
+
+<a name="BattleModifierNone"></a>
+
+```go
+const (
+    // BattleModifierNone means the war has no battle modifier.
+    BattleModifierNone BattleModifier = "none"
+    // BattleModifierHardMode is the esports hard mode modifier.
+    BattleModifierHardMode BattleModifier = "hardMode"
+    // BattleModifierMinusOne is the Legend I battle modifier.
+    BattleModifierMinusOne BattleModifier = "minusOne"
+    // BattleModifierMinusTwo is the Legend II battle modifier.
+    BattleModifierMinusTwo BattleModifier = "minusTwo"
+    // BattleModifierMinusThree is the Legend III battle modifier.
+    BattleModifierMinusThree BattleModifier = "minusThree"
+)
+```
+
+<a name="BattleModifier.InGameName"></a>
+### func \(BattleModifier\) [InGameName](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L87>)
+
+```go
+func (m BattleModifier) InGameName() string
+```
+
+InGameName returns a client\-facing display name for the battle modifier.
+
 <a name="BattleType"></a>
 ## type [BattleType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L59>)
 
@@ -1085,7 +1122,7 @@ type ClanMember struct {
 ```
 
 <a name="ClanType"></a>
-## type [ClanType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L71>)
+## type [ClanType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L105>)
 
 ClanType describes a clan's join policy.
 
@@ -1131,7 +1168,7 @@ type ClanWar struct {
     Opponent *WarClan `json:"opponent,omitempty"`
     // BattleModifier describes event-specific modifiers when the API includes
     // one.
-    BattleModifier string `json:"battleModifier,omitempty"`
+    BattleModifier BattleModifier `json:"battleModifier,omitempty"`
     // WarTag is the CWL war tag. It is empty for normal classic wars.
     WarTag string `json:"tag,omitempty"`
     // ClanTag is the requested clan tag associated with this response.
@@ -1161,7 +1198,7 @@ func (w *ClanWar) Type() string
 Type returns "cwl" when the war has a CWL war tag and "random" otherwise.
 
 <a name="ClanWarLeagueClan"></a>
-## type [ClanWarLeagueClan](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L144-L153>)
+## type [ClanWarLeagueClan](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L147-L156>)
 
 ClanWarLeagueClan is a clan entry inside a CWL group.
 
@@ -1179,7 +1216,7 @@ type ClanWarLeagueClan struct {
 ```
 
 <a name="ClanWarLeagueGroup"></a>
-## type [ClanWarLeagueGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L156-L169>)
+## type [ClanWarLeagueGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L159-L172>)
 
 ClanWarLeagueGroup is the current CWL group for a clan.
 
@@ -1201,7 +1238,7 @@ type ClanWarLeagueGroup struct {
 ```
 
 <a name="ClanWarLogEntry"></a>
-## type [ClanWarLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L129-L141>)
+## type [ClanWarLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L129-L144>)
 
 ClanWarLogEntry is one item from a clan's public war log.
 
@@ -1217,6 +1254,9 @@ type ClanWarLogEntry struct {
     Clan *WarClan `json:"clan,omitempty"`
     // Opponent is the opposing clan side.
     Opponent *WarClan `json:"opponent,omitempty"`
+    // BattleModifier describes event-specific modifiers when the API includes
+    // one.
+    BattleModifier BattleModifier `json:"battleModifier,omitempty"`
     // contains filtered or unexported fields
 }
 ```
@@ -1949,7 +1989,7 @@ func (e Equipment) Static(c *Client) *Equipment
 Static returns the embedded static\-data record matching this equipment's name and level.
 
 <a name="ExtendedCWLGroup"></a>
-## type [ExtendedCWLGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L172-L179>)
+## type [ExtendedCWLGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L175-L182>)
 
 ExtendedCWLGroup contains static medal information for a CWL league.
 
@@ -2318,7 +2358,7 @@ type LegendStatistics struct {
 ```
 
 <a name="LoadGameData"></a>
-## type [LoadGameData](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L95-L106>)
+## type [LoadGameData](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L129-L140>)
 
 LoadGameData describes when static game data should be loaded.
 
@@ -2338,7 +2378,7 @@ type LoadGameData struct {
 ```
 
 <a name="DefaultLoadGameData"></a>
-### func [DefaultLoadGameData](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L109>)
+### func [DefaultLoadGameData](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L143>)
 
 ```go
 func DefaultLoadGameData() LoadGameData
@@ -3251,7 +3291,7 @@ type TroopCount struct {
 ```
 
 <a name="VillageType"></a>
-## type [VillageType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L83>)
+## type [VillageType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L117>)
 
 VillageType identifies the village or game area for static data and units.
 

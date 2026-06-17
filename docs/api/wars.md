@@ -88,7 +88,7 @@ Opponent is the opposing clan side for oriented responses.
 
 ### `BattleModifier`
 
-<p><code>string</code> <span class="api-json">json: battleModifier</span></p>
+<p><code><a href="../clashy/#battlemodifier">BattleModifier</a></code> <span class="api-json">json: battleModifier</span></p>
 
 BattleModifier describes event-specific modifiers when the API includes
 one.
@@ -446,6 +446,17 @@ Clan is the requested clan side.
 <p><code>*<a href="#warclan">WarClan</a></code> <span class="api-json">json: opponent</span></p>
 
 Opponent is the opposing clan side.
+
+</div>
+
+<div class="api-field" id="clanwarlogentry-battlemodifier" markdown="1">
+
+### `BattleModifier`
+
+<p><code><a href="../clashy/#battlemodifier">BattleModifier</a></code> <span class="api-json">json: battleModifier</span></p>
+
+BattleModifier describes event-specific modifiers when the API includes
+one.
 
 </div>
 

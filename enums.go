@@ -67,6 +67,40 @@ const (
 	BattleTypeLegend BattleType = "LEGEND"
 )
 
+// BattleModifier describes the modifier applied to a war battle.
+type BattleModifier string
+
+const (
+	// BattleModifierNone means the war has no battle modifier.
+	BattleModifierNone BattleModifier = "none"
+	// BattleModifierHardMode is the esports hard mode modifier.
+	BattleModifierHardMode BattleModifier = "hardMode"
+	// BattleModifierMinusOne is the Legend I battle modifier.
+	BattleModifierMinusOne BattleModifier = "minusOne"
+	// BattleModifierMinusTwo is the Legend II battle modifier.
+	BattleModifierMinusTwo BattleModifier = "minusTwo"
+	// BattleModifierMinusThree is the Legend III battle modifier.
+	BattleModifierMinusThree BattleModifier = "minusThree"
+)
+
+// InGameName returns a client-facing display name for the battle modifier.
+func (m BattleModifier) InGameName() string {
+	switch m {
+	case "", BattleModifierNone:
+		return "None"
+	case BattleModifierHardMode:
+		return "Hard Mode"
+	case BattleModifierMinusOne:
+		return "Minus One"
+	case BattleModifierMinusTwo:
+		return "Minus Two"
+	case BattleModifierMinusThree:
+		return "Minus Three"
+	default:
+		return string(m)
+	}
+}
+
 // ClanType describes a clan's join policy.
 type ClanType string
 

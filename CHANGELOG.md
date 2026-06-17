@@ -5,6 +5,7 @@ All notable changes to this module are documented here.
 ## Unreleased
 
 - Updated battle log, ranked player, and CWL/league-group models for the latest Clash of Clans API Swagger fields.
+- Added typed battle modifier values for wars and war log entries.
 - Fixed developer-site login by reusing the session cookie for API-key management requests.
 - Changed `GetPlayerLeagueGroup` to accept string season IDs so full-date season identifiers can be used.
 - Pulled the latest embedded static data and regenerated static constants.

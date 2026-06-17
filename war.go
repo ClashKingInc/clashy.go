@@ -84,7 +84,7 @@ type ClanWar struct {
 	Opponent *WarClan `json:"opponent,omitempty"`
 	// BattleModifier describes event-specific modifiers when the API includes
 	// one.
-	BattleModifier string `json:"battleModifier,omitempty"`
+	BattleModifier BattleModifier `json:"battleModifier,omitempty"`
 	// WarTag is the CWL war tag. It is empty for normal classic wars.
 	WarTag string `json:"tag,omitempty"`
 	// ClanTag is the requested clan tag associated with this response.
@@ -137,6 +137,9 @@ type ClanWarLogEntry struct {
 	Clan *WarClan `json:"clan,omitempty"`
 	// Opponent is the opposing clan side.
 	Opponent *WarClan `json:"opponent,omitempty"`
+	// BattleModifier describes event-specific modifiers when the API includes
+	// one.
+	BattleModifier BattleModifier `json:"battleModifier,omitempty"`
 	responseMeta
 }
 
