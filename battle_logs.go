@@ -1,5 +1,10 @@
 package clashy
 
+import (
+	"encoding/json"
+	"time"
+)
+
 // Resource is a named resource amount in a player battle log entry.
 type Resource struct {
 	// Name is the resource name, such as gold, elixir, or dark elixir.
@@ -29,7 +34,31 @@ type BattleLogEntry struct {
 	ExtraLootedResources []Resource `json:"extraLootedResources,omitempty"`
 	// AvailableLoot contains resources that were available before the battle.
 	AvailableLoot []Resource `json:"availableLoot,omitempty"`
+	// Timestamp is the parsed UTC time when the battle occurred.
+	Timestamp time.Time `json:"timestamp,omitempty"`
 	responseMeta
+}
+
+// UnmarshalJSON decodes the CoC battle-log `timestamp` (format 20060102T150405.000Z)
+// into a standard time.Time. The alias avoids recursion and shadows the timestamp key
+// so the time.Time field is not parsed with the default RFC3339 decoder.
+func (b *BattleLogEntry) UnmarshalJSON(data []byte) error {
+	type alias BattleLogEntry
+	aux := struct {
+		Timestamp string `json:"timestamp"`
+		*alias
+	}{alias: (*alias)(b)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if aux.Timestamp != "" {
+		ts, err := FromTimestamp(aux.Timestamp)
+		if err != nil {
+			return err
+		}
+		b.Timestamp = ts
+	}
+	return nil
 }
 
 // LeagueHistoryEntry is one historical legend-league season result.
