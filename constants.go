@@ -117,8 +117,6 @@ var (
 		"K.A.N.E",
 		"The Disarmer",
 		"YEETer",
-		"YEETer",
-		"The Disarmer",
 		"Meteor Golem",
 	}
 	// BuilderTroopOrder lists Builder Base troops in UI order.
