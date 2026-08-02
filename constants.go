@@ -118,6 +118,7 @@ var (
 		"The Disarmer",
 		"YEETer",
 		"Meteor Golem",
+		"Elephant Rider",
 	}
 	// BuilderTroopOrder lists Builder Base troops in UI order.
 	BuilderTroopOrder = []string{
@@ -239,6 +240,7 @@ var (
 		"Stun Blaster",
 		"Flame Blower",
 		"Electro Fangs",
+		"Revenge Deck",
 	}
 	// HVBuildingOrder lists home-village buildings in static-data order.
 	HVBuildingOrder = []string{
