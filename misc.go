@@ -30,6 +30,19 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON round-trips a Timestamp back to the CoC string format
+// (20060102T150405.000Z) so re-serialised entities match the original API
+// payload. Without this the struct would marshal as {"RawTime":..,"Time":..}.
+func (t Timestamp) MarshalJSON() ([]byte, error) {
+	if t.RawTime != "" {
+		return json.Marshal(t.RawTime)
+	}
+	if t.Time.IsZero() {
+		return []byte("null"), nil
+	}
+	return json.Marshal(t.Time.UTC().Format("20060102T150405.000Z"))
+}
+
 // SecondsUntil returns the number of whole seconds from now until the timestamp.
 func (t Timestamp) SecondsUntil() int {
 	if t.Time.IsZero() {

@@ -23,7 +23,7 @@ type RankedPlayer struct {
 }
 
 type responseMeta struct {
-	ResponseRetry int
+	ResponseRetry int `json:"-"`
 }
 
 // RetryAfter returns the number of seconds the API says this response can be
