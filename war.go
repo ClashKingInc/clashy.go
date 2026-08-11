@@ -14,12 +14,6 @@ type WarAttack struct {
 	Destruction float64 `json:"destructionPercentage,omitempty"`
 	// Duration is the attack duration in seconds.
 	Duration int `json:"duration,omitempty"`
-	// Attacker is optionally linked to the attacker member when a caller enriches
-	// the attack from the war member list.
-	Attacker *ClanWarMember
-	// Defender is optionally linked to the defender member when a caller enriches
-	// the attack from the war member list.
-	Defender *ClanWarMember
 }
 
 // ClanWarMember is a player entry on one side of a war.
@@ -107,7 +101,16 @@ func (w *ClanWar) Attacks() []WarAttack {
 	if w == nil {
 		return nil
 	}
-	var out []WarAttack
+	total := 0
+	for _, side := range []*WarClan{w.Clan, w.Opponent} {
+		if side == nil {
+			continue
+		}
+		for i := range side.Members {
+			total += len(side.Members[i].Attacks)
+		}
+	}
+	out := make([]WarAttack, 0, total)
 	if w.Clan != nil {
 		for i := range w.Clan.Members {
 			for _, attack := range w.Clan.Members[i].Attacks {
@@ -123,6 +126,30 @@ func (w *ClanWar) Attacks() []WarAttack {
 		}
 	}
 	return out
+}
+
+// Member returns the war member with tag from either side of the war.
+func (w *ClanWar) Member(tag string) *ClanWarMember {
+	if w == nil {
+		return nil
+	}
+	tag = CorrectTag(tag)
+	for _, side := range []*WarClan{w.Clan, w.Opponent} {
+		if side == nil {
+			continue
+		}
+		for i := range side.Members {
+			if CorrectTag(side.Members[i].Tag) == tag {
+				return &side.Members[i]
+			}
+		}
+	}
+	return nil
+}
+
+// ResolveAttack resolves an attack's tags to the matching war members.
+func (w *ClanWar) ResolveAttack(attack WarAttack) (attacker, defender *ClanWarMember) {
+	return w.Member(attack.AttackerTag), w.Member(attack.DefenderTag)
 }
 
 // ClanWarLogEntry is one item from a clan's public war log.
@@ -153,6 +180,18 @@ type ClanWarLeagueClan struct {
 	Badge Badge `json:"badgeUrls,omitempty"`
 	// Level is the clan level.
 	Level int `json:"clanLevel,omitempty"`
+	// Members is the frozen master roster registered for this CWL clan.
+	Members []ClanWarLeagueClanMember `json:"members,omitempty"`
+}
+
+// ClanWarLeagueClanMember is one player in a CWL clan's master roster.
+type ClanWarLeagueClanMember struct {
+	// Tag is the player's tag.
+	Tag string `json:"tag,omitempty"`
+	// Name is the player's name at registration time.
+	Name string `json:"name,omitempty"`
+	// TownHallLevel is the player's Town Hall level at registration time.
+	TownHallLevel int `json:"townHallLevel,omitempty"`
 }
 
 // ClanWarLeagueGroup is the current CWL group for a clan.

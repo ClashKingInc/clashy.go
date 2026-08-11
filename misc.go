@@ -17,6 +17,10 @@ type Timestamp struct {
 
 // UnmarshalJSON parses Clash API timestamp strings into Timestamp values.
 func (t *Timestamp) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		*t = Timestamp{}
+		return nil
+	}
 	var raw string
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
@@ -28,6 +32,15 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	t.RawTime = raw
 	t.Time = ts
 	return nil
+}
+
+// MarshalJSON encodes Timestamp using the Clash API timestamp format.
+func (t Timestamp) MarshalJSON() ([]byte, error) {
+	raw := t.RawTime
+	if !t.Time.IsZero() {
+		raw = t.Time.UTC().Format("20060102T150405.000Z")
+	}
+	return json.Marshal(raw)
 }
 
 // SecondsUntil returns the number of whole seconds from now until the timestamp.

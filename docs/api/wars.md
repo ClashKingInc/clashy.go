@@ -369,28 +369,6 @@ Duration is the attack duration in seconds.
 
 </div>
 
-<div class="api-field" id="warattack-attacker" markdown="1">
-
-### `Attacker`
-
-<p><code>*<a href="#clanwarmember">ClanWarMember</a></code></p>
-
-Attacker is optionally linked to the attacker member when a caller enriches
-the attack from the war member list.
-
-</div>
-
-<div class="api-field" id="warattack-defender" markdown="1">
-
-### `Defender`
-
-<p><code>*<a href="#clanwarmember">ClanWarMember</a></code></p>
-
-Defender is optionally linked to the defender member when a caller enriches
-the attack from the war member list.
-
-</div>
-
 <a id="clanwarlogentry"></a>
 
 ## Clan War Log Entry
@@ -745,6 +723,55 @@ Attacks returns all attacks made by both sides of the war.
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
 <code>[]<a href="#warattack">WarAttack</a></code> </dd>
+</dl>
+
+</div>
+
+<a id="clanwar-member"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.ClanWar.Member(<span class="api-param">tag: string</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*ClanWarMember</span></code></p>
+
+Member returns the war member with tag from either side of the war.
+
+<dl class="api-parameters">
+<dt>Parameters:</dt><dd>
+<p><strong>tag</strong> (<code>string</code>)</p>
+</dd>
+</dl>
+
+<dl class="api-parameters">
+<dt>Return type:</dt><dd>
+<code>*<a href="#clanwarmember">ClanWarMember</a></code> </dd>
+</dl>
+
+</div>
+
+<a id="clanwar-resolveattack"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.ClanWar.ResolveAttack(<span class="api-param">attack: WarAttack</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">*ClanWarMember</span>, <span class="api-return">*ClanWarMember</span>)</code></p>
+
+ResolveAttack resolves an attack's tags to the matching war members.
+
+<dl class="api-parameters">
+<dt>Parameters:</dt><dd>
+<p><strong>attack</strong> (<code><a href="#warattack">WarAttack</a></code>)</p>
+</dd>
+</dl>
+
+<dl class="api-parameters">
+<dt>Returns:</dt><dd>
+<p><strong>attacker</strong> (<code>*<a href="#clanwarmember">ClanWarMember</a></code>)</p>
+<p><strong>defender</strong> (<code>*<a href="#clanwarmember">ClanWarMember</a></code>)</p>
+</dd>
+</dl>
+
+<dl class="api-parameters">
+<dt>Return type:</dt><dd>
+<code>*<a href="#clanwarmember">ClanWarMember</a></code> <code>*<a href="#clanwarmember">ClanWarMember</a></code> </dd>
 </dl>
 
 </div>

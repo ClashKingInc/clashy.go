@@ -7,27 +7,33 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-
-	clashy "github.com/clashkinginc/clashy.go"
+	"time"
 )
 
 type item map[string]any
 
+const (
+	staticDataURL   = "https://assets.clashk.ing/static_data.json"
+	translationsURL = "https://assets.clashk.ing/translations.json"
+	maxDownloadSize = 64 << 20
+)
+
 func main() {
 	ctx := context.Background()
-	client, err := clashy.NewClient(clashy.DefaultClientConfig())
+	data, translations, err := downloadStaticFiles(ctx)
 	if err != nil {
 		fail(err)
 	}
-	if err := client.UpdateStatic(ctx); err != nil {
+	if err := writeAtomic(filepath.Join("static", "static_data.json"), data); err != nil {
 		fail(err)
 	}
-	data, err := os.ReadFile(filepath.Join("static", "static_data.json"))
-	if err != nil {
+	if err := writeAtomic(filepath.Join("static", "translations.json"), translations); err != nil {
 		fail(err)
 	}
 
@@ -67,7 +73,7 @@ func main() {
 		{"SiegeMachineOrder", names(filter(troops, func(t item) bool { return stringValue(t, "production_building") == "Workshop" }))},
 		{"SuperTroopOrder", names(filter(troops, func(t item) bool { return hasKey(t, "super_troop") }))},
 		{"HomeTroopOrderWithSieges", "append(append([]string{}, HomeTroopOrder...), SiegeMachineOrder...)"},
-		{"SeasonalTroopOrder", names(filter(troops, func(t item) bool { return boolValue(t, "is_seasonal") }))},
+		{"SeasonalTroopOrder", namesUniqueLast(filter(troops, func(t item) bool { return boolValue(t, "is_seasonal") }))},
 		{"BuilderTroopOrder", names(filter(troops, func(t item) bool { return stringValue(t, "village") == "builderBase" }))},
 		{"ElixirSpellOrder", names(filter(spells, func(s item) bool {
 			return stringValue(s, "upgrade_resource") == "Elixir" && !boolValue(s, "is_seasonal")
@@ -94,11 +100,11 @@ func main() {
 	out.WriteString("\t// SpellBaseID is the base static-data ID offset for spells in army links.\n")
 	out.WriteString("\tSpellBaseID = 26000000\n")
 	out.WriteString("\t// HeroBaseID is the base static-data ID offset for heroes in army links.\n")
-	out.WriteString("\tHeroBaseID = 2000000\n")
+	out.WriteString("\tHeroBaseID = 28000000\n")
 	out.WriteString("\t// PetBaseID is the base static-data ID offset for pets in army links.\n")
-	out.WriteString("\tPetBaseID = 60000000\n")
+	out.WriteString("\tPetBaseID = 73000000\n")
 	out.WriteString("\t// EquipmentBaseID is the base static-data ID offset for hero equipment in army links.\n")
-	out.WriteString("\tEquipmentBaseID = 30000000\n")
+	out.WriteString("\tEquipmentBaseID = 90000000\n")
 	for _, list := range lists {
 		fmt.Fprintf(&out, "\t// %s\n", constantDescription(list.name))
 		switch value := list.value.(type) {
@@ -114,10 +120,79 @@ func main() {
 	}
 	out.WriteString(")\n")
 
-	if err := os.WriteFile("constants.go", out.Bytes(), 0o644); err != nil {
+	if err := writeAtomic("constants.go", out.Bytes()); err != nil {
 		fail(err)
 	}
 	fmt.Println("Constants written to constants.go")
+}
+
+func downloadStaticFiles(ctx context.Context) ([]byte, []byte, error) {
+	client := &http.Client{Timeout: 30 * time.Second}
+	staticData, err := downloadJSON(ctx, client, staticDataURL)
+	if err != nil {
+		return nil, nil, err
+	}
+	translations, err := downloadJSON(ctx, client, translationsURL)
+	if err != nil {
+		return nil, nil, err
+	}
+	var staticPayload map[string]json.RawMessage
+	if err := json.Unmarshal(staticData, &staticPayload); err != nil {
+		return nil, nil, fmt.Errorf("validate static data: %w", err)
+	}
+	var translationPayload map[string]map[string]string
+	if err := json.Unmarshal(translations, &translationPayload); err != nil {
+		return nil, nil, fmt.Errorf("validate translations: %w", err)
+	}
+	return staticData, translations, nil
+}
+
+func downloadJSON(ctx context.Context, client *http.Client, rawURL string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("download %s: unexpected status %s", rawURL, resp.Status)
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxDownloadSize+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(body) > maxDownloadSize {
+		return nil, fmt.Errorf("download %s exceeds %d bytes", rawURL, maxDownloadSize)
+	}
+	return body, nil
+}
+
+func writeAtomic(path string, data []byte) error {
+	directory := filepath.Dir(path)
+	if err := os.MkdirAll(directory, 0o755); err != nil {
+		return err
+	}
+	temp, err := os.CreateTemp(directory, ".clashy-static-*")
+	if err != nil {
+		return err
+	}
+	tempPath := temp.Name()
+	defer os.Remove(tempPath)
+	if _, err := temp.Write(data); err != nil {
+		temp.Close()
+		return err
+	}
+	if err := temp.Chmod(0o644); err != nil {
+		temp.Close()
+		return err
+	}
+	if err := temp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tempPath, path)
 }
 
 type constantList struct {
@@ -167,6 +242,21 @@ func names(items []item) []string {
 	out := make([]string, 0, len(items))
 	for _, item := range items {
 		out = append(out, stringValue(item, "name"))
+	}
+	return out
+}
+
+func namesUniqueLast(items []item) []string {
+	last := make(map[string]int, len(items))
+	for i, item := range items {
+		last[stringValue(item, "name")] = i
+	}
+	out := make([]string, 0, len(last))
+	for i, item := range items {
+		name := stringValue(item, "name")
+		if name != "" && last[name] == i {
+			out = append(out, name)
+		}
 	}
 	return out
 }

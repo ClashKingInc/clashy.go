@@ -15,7 +15,7 @@ heroes, pets, and hero equipment.
 
 ### `Name`
 
-<p><code>string</code></p>
+<p><code>string</code> <span class="api-json">json: name</span></p>
 
 Name is the unit or equipment display name.
 
@@ -25,7 +25,7 @@ Name is the unit or equipment display name.
 
 ### `Level`
 
-<p><code>int</code></p>
+<p><code>int</code> <span class="api-json">json: level</span></p>
 
 Level is the selected level for this static lookup.
 
@@ -35,7 +35,7 @@ Level is the selected level for this static lookup.
 
 ### `MaxLevel`
 
-<p><code>int</code></p>
+<p><code>int</code> <span class="api-json">json: maxLevel</span></p>
 
 MaxLevel is the maximum level found in static data.
 
@@ -45,7 +45,7 @@ MaxLevel is the maximum level found in static data.
 
 ### `Village`
 
-<p><code>string</code></p>
+<p><code>string</code> <span class="api-json">json: village</span></p>
 
 Village identifies the village this object belongs to.
 
@@ -55,7 +55,7 @@ Village identifies the village this object belongs to.
 
 ### `UpgradeCost`
 
-<p><code>int</code></p>
+<p><code>int</code> <span class="api-json">json: upgradeCost</span></p>
 
 UpgradeCost is the cost for the selected level when static data includes
 it.
@@ -66,10 +66,20 @@ it.
 
 ### `UpgradeTime`
 
-<p><code>time.Duration</code></p>
+<p><code>time.Duration</code> <span class="api-json">json: upgradeTime</span></p>
 
 UpgradeTime is the upgrade duration for the selected level when static data
 includes it.
+
+</div>
+
+<div class="api-field" id="staticunit-rarity" markdown="1">
+
+### `Rarity`
+
+<p><code>string</code> <span class="api-json">json: rarity</span></p>
+
+Rarity is populated for hero equipment when static data includes it.
 
 </div>
 
@@ -79,7 +89,7 @@ includes it.
 
 <p class="api-signature"><span class="api-kind">struct</span> <code>clashy.Troop</code></p>
 
-Troop is a player troop or static troop lookup result.
+Troop is a troop from a player response.
 
 <div class="api-field" id="troop-name" markdown="1">
 
@@ -132,21 +142,13 @@ SuperTroopIsActive reports whether a super troop boost is active.
 
 </div>
 
-<div class="api-field" id="troop-staticunit" markdown="1">
-
-### `StaticUnit`
-
-<p><code><a href="#staticunit">StaticUnit</a></code></p>
-
-</div>
-
 <a id="spell"></a>
 
 ## Spell
 
 <p class="api-signature"><span class="api-kind">struct</span> <code>clashy.Spell</code></p>
 
-Spell is a player spell or static spell lookup result.
+Spell is a spell from a player response.
 
 <div class="api-field" id="spell-name" markdown="1">
 
@@ -188,21 +190,13 @@ Village identifies the spell's village when static data provides one.
 
 </div>
 
-<div class="api-field" id="spell-staticunit" markdown="1">
-
-### `StaticUnit`
-
-<p><code><a href="#staticunit">StaticUnit</a></code></p>
-
-</div>
-
 <a id="hero"></a>
 
 ## Hero
 
 <p class="api-signature"><span class="api-kind">struct</span> <code>clashy.Hero</code></p>
 
-Hero is a player hero or static hero lookup result.
+Hero is a hero from a player response.
 
 <div class="api-field" id="hero-name" markdown="1">
 
@@ -255,21 +249,13 @@ includes loadout data.
 
 </div>
 
-<div class="api-field" id="hero-staticunit" markdown="1">
-
-### `StaticUnit`
-
-<p><code><a href="#staticunit">StaticUnit</a></code></p>
-
-</div>
-
 <a id="pet"></a>
 
 ## Pet
 
 <p class="api-signature"><span class="api-kind">struct</span> <code>clashy.Pet</code></p>
 
-Pet is a hero pet from a player response or static lookup.
+Pet is a hero pet from a player response.
 
 <div class="api-field" id="pet-name" markdown="1">
 
@@ -311,21 +297,13 @@ Village identifies the pet's village.
 
 </div>
 
-<div class="api-field" id="pet-staticunit" markdown="1">
-
-### `StaticUnit`
-
-<p><code><a href="#staticunit">StaticUnit</a></code></p>
-
-</div>
-
 <a id="equipment"></a>
 
 ## Equipment
 
 <p class="api-signature"><span class="api-kind">struct</span> <code>clashy.Equipment</code></p>
 
-Equipment is hero equipment from a player response or static lookup.
+Equipment is hero equipment from a player response.
 
 <div class="api-field" id="equipment-name" markdown="1">
 
@@ -374,14 +352,6 @@ Village identifies the equipment's village.
 <p><code>string</code> <span class="api-json">json: rarity</span></p>
 
 Rarity is the equipment rarity when static data includes it.
-
-</div>
-
-<div class="api-field" id="equipment-staticunit" markdown="1">
-
-### `StaticUnit`
-
-<p><code><a href="#staticunit">StaticUnit</a></code></p>
 
 </div>
 
@@ -616,7 +586,7 @@ IsSuperTroop reports whether the troop name is one of the known super troops.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Troop.Static(<span class="api-param">c: *Client</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*Troop</span></code></p>
+<p class="api-signature api-function-signature"><code>clashy.Troop.Static(<span class="api-param">c: *Client</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*StaticUnit</span></code></p>
 
 Static returns the embedded static-data record matching this troop's name,
 village, and level.
@@ -629,7 +599,7 @@ village, and level.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
-<code>*<a href="#troop">Troop</a></code> </dd>
+<code>*<a href="#staticunit">StaticUnit</a></code> </dd>
 </dl>
 
 </div>
@@ -640,7 +610,7 @@ village, and level.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Spell.Static(<span class="api-param">c: *Client</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*Spell</span></code></p>
+<p class="api-signature api-function-signature"><code>clashy.Spell.Static(<span class="api-param">c: *Client</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*StaticUnit</span></code></p>
 
 Static returns the embedded static-data record matching this spell's name and
 level.
@@ -653,7 +623,7 @@ level.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
-<code>*<a href="#spell">Spell</a></code> </dd>
+<code>*<a href="#staticunit">StaticUnit</a></code> </dd>
 </dl>
 
 </div>
@@ -664,7 +634,7 @@ level.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Hero.Static(<span class="api-param">c: *Client</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*Hero</span></code></p>
+<p class="api-signature api-function-signature"><code>clashy.Hero.Static(<span class="api-param">c: *Client</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*StaticUnit</span></code></p>
 
 Static returns the embedded static-data record matching this hero's name and
 level.
@@ -677,7 +647,7 @@ level.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
-<code>*<a href="#hero">Hero</a></code> </dd>
+<code>*<a href="#staticunit">StaticUnit</a></code> </dd>
 </dl>
 
 </div>
@@ -688,7 +658,7 @@ level.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Pet.Static(<span class="api-param">c: *Client</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*Pet</span></code></p>
+<p class="api-signature api-function-signature"><code>clashy.Pet.Static(<span class="api-param">c: *Client</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*StaticUnit</span></code></p>
 
 Static returns the embedded static-data record matching this pet's name and
 level.
@@ -701,7 +671,7 @@ level.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
-<code>*<a href="#pet">Pet</a></code> </dd>
+<code>*<a href="#staticunit">StaticUnit</a></code> </dd>
 </dl>
 
 </div>
@@ -712,7 +682,7 @@ level.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Equipment.Static(<span class="api-param">c: *Client</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*Equipment</span></code></p>
+<p class="api-signature api-function-signature"><code>clashy.Equipment.Static(<span class="api-param">c: *Client</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*StaticUnit</span></code></p>
 
 Static returns the embedded static-data record matching this equipment's name
 and level.
@@ -725,7 +695,7 @@ and level.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
-<code>*<a href="#equipment">Equipment</a></code> </dd>
+<code>*<a href="#staticunit">StaticUnit</a></code> </dd>
 </dl>
 
 </div>

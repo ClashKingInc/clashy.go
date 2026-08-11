@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/netip"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -48,17 +50,53 @@ func encodeTag(tag string) string {
 	return url.PathEscape(CorrectTag(tag))
 }
 
-func cacheExpiry(header string) time.Duration {
-	for _, part := range strings.Split(header, ",") {
-		part = strings.TrimSpace(part)
-		part = strings.TrimPrefix(part, "public ")
-		if strings.HasPrefix(part, "max-age=") {
-			if secs, err := time.ParseDuration(strings.TrimPrefix(part, "max-age=") + "s"); err == nil {
-				return secs
+func cacheExpiry(header http.Header) time.Duration {
+	var maxAge int64 = -1
+	for _, value := range header.Values("Cache-Control") {
+		for _, directive := range strings.Split(value, ",") {
+			directive = strings.TrimSpace(directive)
+			if strings.HasPrefix(strings.ToLower(directive), "public ") {
+				directive = strings.TrimSpace(directive[len("public "):])
+			}
+			name, rawValue, hasValue := strings.Cut(directive, "=")
+			switch strings.ToLower(strings.TrimSpace(name)) {
+			case "no-cache", "no-store":
+				return 0
+			case "max-age":
+				if !hasValue {
+					continue
+				}
+				seconds, err := strconv.ParseInt(strings.Trim(strings.TrimSpace(rawValue), `"`), 10, 64)
+				if err == nil && seconds >= 0 {
+					maxAge = seconds
+				}
 			}
 		}
 	}
-	return 0
+	if maxAge < 0 {
+		return 0
+	}
+	age, err := strconv.ParseInt(strings.TrimSpace(header.Get("Age")), 10, 64)
+	if err == nil && age > 0 {
+		maxAge -= age
+	}
+	if maxAge <= 0 {
+		return 0
+	}
+	return time.Duration(maxAge) * time.Second
+}
+
+func cidrContainsIP(cidr, ip string) bool {
+	address, err := netip.ParseAddr(strings.TrimSpace(ip))
+	if err != nil {
+		return false
+	}
+	cidr = strings.TrimSpace(cidr)
+	if prefix, prefixErr := netip.ParsePrefix(cidr); prefixErr == nil {
+		return prefix.Contains(address)
+	}
+	other, err := netip.ParseAddr(cidr)
+	return err == nil && other == address
 }
 
 func jwtIP(token string) string {

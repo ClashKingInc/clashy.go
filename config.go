@@ -3,7 +3,7 @@ package clashy
 import "time"
 
 // ClientConfig controls API endpoints, authentication behavior, request
-// throttling, response caching, and static-data loading.
+// throttling, response caching, and transport behavior.
 //
 // Most callers should start from DefaultClientConfig and override only the
 // fields that differ for their service. The zero value is not the recommended
@@ -20,6 +20,11 @@ type ClientConfig struct {
 	ThrottleLimit int
 	// Timeout is applied to the underlying http.Client.
 	Timeout time.Duration
+	// MaxBaseURLConns optionally caps total active and idle connections to the
+	// configured API base URL.
+	MaxBaseURLConns int
+	// IdleConnTimeout controls how long idle HTTP connections remain reusable.
+	IdleConnTimeout time.Duration
 	// BaseURL is the Clash API or compatible proxy base URL, usually ending in
 	// /v1 without a trailing slash.
 	BaseURL string
@@ -30,23 +35,16 @@ type ClientConfig struct {
 	IP string
 	// Realtime adds realtime=true to current-war requests that support it.
 	Realtime bool
-	// CorrectTags enables Clash tag normalization before tags are placed in API
-	// paths or query strings.
-	CorrectTags bool
 	// CacheMaxSize bounds the number of GET responses retained in memory.
 	CacheMaxSize int
+	// CacheMaxEntryBytes prevents unusually large responses from being retained
+	// in the in-memory cache. A value less than or equal to zero disables this
+	// per-entry limit.
+	CacheMaxEntryBytes int
 	// LookupCache allows GET requests to return fresh cached responses.
 	LookupCache bool
 	// UpdateCache allows successful GET responses to refresh the in-memory cache.
 	UpdateCache bool
-	// IgnoreCachedErrors is reserved for compatibility with callers that model
-	// cache behavior after coc.py; current request handling does not use it.
-	IgnoreCachedErrors []int
-	// RawJSON is reserved for callers that need raw response capture; current
-	// high-level methods unmarshal into typed models.
-	RawJSON bool
-	// LoadGameData describes when static game data should be loaded.
-	LoadGameData LoadGameData
 	// UserAgent is sent with Clash API or proxy requests.
 	UserAgent string
 	// DeveloperUserAgent is sent with developer-site login and key-management
@@ -57,22 +55,23 @@ type ClientConfig struct {
 // DefaultClientConfig returns the recommended baseline configuration for the
 // official Clash of Clans API.
 //
-// The defaults enable tag correction, GET response caching, embedded static
-// data, a 30 second timeout, and a conservative request throttle. Callers using
-// a ClashKing proxy typically override BaseURL and may enable Realtime.
+// The defaults enable GET response caching, a 30 second timeout, and a
+// conservative request throttle. Callers using a ClashKing proxy typically
+// override BaseURL and may enable Realtime.
 func DefaultClientConfig() ClientConfig {
 	return ClientConfig{
 		KeyCount:           1,
 		KeyNames:           "Created with clashy.go Client",
 		ThrottleLimit:      30,
 		Timeout:            30 * time.Second,
+		MaxBaseURLConns:    100,
+		IdleConnTimeout:    90 * time.Second,
 		BaseURL:            "https://api.clashofclans.com/v1",
 		DeveloperBaseURL:   "https://developer.clashofclans.com",
-		CorrectTags:        true,
 		CacheMaxSize:       10000,
+		CacheMaxEntryBytes: 100 << 10,
 		LookupCache:        true,
 		UpdateCache:        true,
-		LoadGameData:       DefaultLoadGameData(),
 		UserAgent:          "clashy.go",
 		DeveloperUserAgent: "clashy.go/devsite",
 	}

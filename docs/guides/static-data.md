@@ -22,6 +22,6 @@ The returned `ArmyRecipe` separates heroes, pets, hero equipment, home troops, s
 
 ## Updating Embedded Data
 
-`UpdateStatic` downloads the latest static data and translations from ClashKing asset URLs, validates the JSON, writes the embedded files under `static/`, and refreshes the current client instance.
+Run `go generate` from the repository root to download and validate the latest static data and translations, atomically replace the embedded files under `static/`, and regenerate `constants.go`.
 
-Run this only when you intend to update the repository's static data files.
+Static data is parsed lazily on first use. Runtime clients cannot rewrite the embedded data, so an application sees one immutable snapshot for its lifetime.

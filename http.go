@@ -22,6 +22,16 @@ type cachedResponse struct {
 	ExpiresAt time.Time
 }
 
+// HTTPResponse is the result of a low-level HTTP request.
+type HTTPResponse struct {
+	// Body is the decoded response payload.
+	Body []byte
+	// StatusCode is the HTTP response status.
+	StatusCode int
+	// RetryAfter is the remaining server-declared cache lifetime.
+	RetryAfter time.Duration
+}
+
 // HTTPClient performs low-level Clash API and developer-site HTTP requests.
 //
 // Most callers should use Client instead. HTTPClient is exported so advanced
@@ -35,15 +45,29 @@ type HTTPClient struct {
 	mu         sync.RWMutex
 	cache      map[string]cachedResponse
 	cacheOrder []string
+	cacheHead  int
 	keys       []string
 	next       int
 }
 
 // NewHTTPClient constructs an HTTPClient from cfg.
 func NewHTTPClient(cfg ClientConfig) *HTTPClient {
+	transport := http.DefaultTransport
+	if base, ok := http.DefaultTransport.(*http.Transport); ok {
+		configured := base.Clone()
+		if cfg.MaxBaseURLConns > 0 {
+			configured.MaxIdleConns = cfg.MaxBaseURLConns
+			configured.MaxIdleConnsPerHost = cfg.MaxBaseURLConns
+			configured.MaxConnsPerHost = cfg.MaxBaseURLConns
+		}
+		if cfg.IdleConnTimeout > 0 {
+			configured.IdleConnTimeout = cfg.IdleConnTimeout
+		}
+		transport = configured
+	}
 	return &HTTPClient{
 		config: cfg,
-		client: &http.Client{Timeout: cfg.Timeout},
+		client: &http.Client{Timeout: cfg.Timeout, Transport: transport},
 		limit:  newRequestLimiter(cfg.ThrottleLimit),
 		cache:  make(map[string]cachedResponse),
 	}
@@ -70,26 +94,26 @@ func (h *HTTPClient) token() string {
 	return token
 }
 
-// Do sends one HTTP request and returns the response body, status code, retry
-// cache duration in seconds, and error.
+// Do sends one HTTP request and returns its named result.
 //
-// Non-2xx API responses are converted into the package's typed HTTP errors.
+// Non-2xx API responses return the HTTPResponse alongside the package's typed
+// HTTP error.
 // Successful GET responses can be read from or written to the in-memory cache
 // depending on RequestOptions.
-func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, options RequestOptions) ([]byte, int, int, error) {
+func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, options RequestOptions) (HTTPResponse, error) {
 	ctx = contextOrBackground(ctx)
 	if method == http.MethodGet && options.LookupCache {
 		h.mu.RLock()
 		cached, ok := h.cache[fullURL]
 		h.mu.RUnlock()
 		if ok && time.Now().Before(cached.ExpiresAt) {
-			return append([]byte(nil), cached.Body...), cached.Status, int(time.Until(cached.ExpiresAt).Seconds()), nil
+			return HTTPResponse{Body: append([]byte(nil), cached.Body...), StatusCode: cached.Status, RetryAfter: time.Until(cached.ExpiresAt)}, nil
 		}
 	}
 	if !rateLimitDisabled(ctx) {
 		release, err := h.limit.Acquire(ctx)
 		if err != nil {
-			return nil, 0, 0, err
+			return HTTPResponse{}, err
 		}
 		defer release()
 	}
@@ -98,14 +122,14 @@ func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, o
 	if body != nil {
 		payload, err := json.Marshal(body)
 		if err != nil {
-			return nil, 0, 0, err
+			return HTTPResponse{}, err
 		}
 		reader = bytes.NewReader(payload)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, fullURL, reader)
 	if err != nil {
-		return nil, 0, 0, err
+		return HTTPResponse{}, err
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Accept-Encoding", "gzip, deflate")
@@ -121,23 +145,24 @@ func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, o
 
 	resp, err := h.client.Do(req)
 	if err != nil {
-		return nil, 0, 0, &GatewayError{newHTTPException(0, "Gateway Error", err.Error(), nil)}
+		return HTTPResponse{}, &GatewayError{newHTTPException(0, "Gateway Error", err.Error(), nil)}
 	}
 	defer resp.Body.Close()
 
 	responseBody, err := h.readResponseBody(resp)
 	if err != nil {
-		return nil, 0, 0, err
+		return HTTPResponse{}, err
 	}
 
-	retry := int(cacheExpiry(resp.Header.Get("Cache-Control")).Seconds())
+	result := HTTPResponse{Body: responseBody, StatusCode: resp.StatusCode, RetryAfter: cacheExpiry(resp.Header)}
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		if method == http.MethodGet && options.UpdateCache && retry > 0 {
+		cacheableSize := h.config.CacheMaxEntryBytes <= 0 || len(responseBody) <= h.config.CacheMaxEntryBytes
+		if method == http.MethodGet && options.UpdateCache && result.RetryAfter > 0 && cacheableSize {
 			h.mu.Lock()
-			h.cacheResponse(fullURL, cachedResponse{Body: append([]byte(nil), responseBody...), Status: resp.StatusCode, ExpiresAt: time.Now().Add(time.Duration(retry) * time.Second)})
+			h.cacheResponse(fullURL, cachedResponse{Body: append([]byte(nil), responseBody...), Status: resp.StatusCode, ExpiresAt: time.Now().Add(result.RetryAfter)})
 			h.mu.Unlock()
 		}
-		return responseBody, resp.StatusCode, retry, nil
+		return result, nil
 	}
 
 	var apiErr struct {
@@ -148,21 +173,29 @@ func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, o
 
 	switch resp.StatusCode {
 	case 400:
-		return nil, resp.StatusCode, retry, &InvalidArgument{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
+		return result, &InvalidArgument{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
 	case 403:
 		reason := apiErr.Reason
 		if strings.EqualFold(reason, "accessDenied.privateWarLog") {
-			return nil, resp.StatusCode, retry, &PrivateWarLog{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
+			return result, &PrivateWarLog{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
 		}
-		return nil, resp.StatusCode, retry, &Forbidden{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
+		return result, &Forbidden{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
 	case 404:
-		return nil, resp.StatusCode, retry, &NotFound{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
+		return result, &NotFound{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
 	case 503:
-		return nil, resp.StatusCode, retry, &Maintenance{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
+		return result, &Maintenance{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
 	case 500, 502, 504:
-		return nil, resp.StatusCode, retry, &GatewayError{newHTTPException(resp.StatusCode, "Gateway Error", string(responseBody), responseBody)}
+		return result, &GatewayError{newHTTPException(resp.StatusCode, "Gateway Error", string(responseBody), responseBody)}
 	default:
-		return nil, resp.StatusCode, retry, newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)
+		return result, newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)
+	}
+}
+
+// CloseIdleConnections closes idle keep-alive connections owned by this
+// client's transport.
+func (h *HTTPClient) CloseIdleConnections() {
+	if h != nil && h.client != nil {
+		h.client.CloseIdleConnections()
 	}
 }
 
@@ -246,7 +279,7 @@ func (h *HTTPClient) LoginDeveloper(ctx context.Context, email, password string)
 			continue
 		}
 		for _, cidr := range key.CIDRRanges {
-			if strings.HasPrefix(cidr, ip) {
+			if cidrContainsIP(cidr, ip) {
 				tokens = append(tokens, key.Key)
 				break
 			}
@@ -356,15 +389,22 @@ func (h *HTTPClient) enforceCacheMaxSize() {
 	if h.config.CacheMaxSize <= 0 {
 		clear(h.cache)
 		h.cacheOrder = h.cacheOrder[:0]
+		h.cacheHead = 0
 		return
 	}
-	for len(h.cache) > h.config.CacheMaxSize && len(h.cacheOrder) > 0 {
-		oldest := h.cacheOrder[0]
-		h.cacheOrder = h.cacheOrder[1:]
+	for len(h.cache) > h.config.CacheMaxSize && h.cacheHead < len(h.cacheOrder) {
+		oldest := h.cacheOrder[h.cacheHead]
+		h.cacheOrder[h.cacheHead] = ""
+		h.cacheHead++
 		if _, ok := h.cache[oldest]; !ok {
 			continue
 		}
 		delete(h.cache, oldest)
+	}
+	if h.cacheHead >= 1024 && h.cacheHead*2 >= len(h.cacheOrder) {
+		copy(h.cacheOrder, h.cacheOrder[h.cacheHead:])
+		h.cacheOrder = h.cacheOrder[:len(h.cacheOrder)-h.cacheHead]
+		h.cacheHead = 0
 	}
 }
 

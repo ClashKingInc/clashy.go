@@ -78,7 +78,7 @@ func TestMockAPIClanEndpoints(t *testing.T) {
 		t.Fatalf("unexpected clan search results: %#v", found)
 	}
 
-	members, err := client.GetMembers(ctx, "#2PP", 5, "", "")
+	members, err := client.GetMembers(ctx, "#2PP", clashy.PageOptions{Limit: 5})
 	if err != nil {
 		t.Fatalf("get members: %v", err)
 	}
@@ -89,7 +89,7 @@ func TestMockAPIClanEndpoints(t *testing.T) {
 		t.Fatalf("unexpected member payload: %#v", members[0])
 	}
 
-	warLog, err := client.GetWarLog(ctx, "#2PP", 2, "", "")
+	warLog, err := client.GetWarLog(ctx, "#2PP", clashy.PageOptions{Limit: 2})
 	if err != nil {
 		t.Fatalf("get war log: %v", err)
 	}
@@ -102,7 +102,7 @@ func TestMockAPIClanEndpoints(t *testing.T) {
 
 	var privateWarLog *clashy.PrivateWarLog
 	var forbidden *clashy.Forbidden
-	if _, err := client.GetWarLog(ctx, "#2PPP", 0, "", ""); !errors.As(err, &privateWarLog) && !errors.As(err, &forbidden) {
+	if _, err := client.GetWarLog(ctx, "#2PPP", clashy.PageOptions{}); !errors.As(err, &privateWarLog) && !errors.As(err, &forbidden) {
 		t.Fatalf("expected private war log error, got %v", err)
 	}
 }
@@ -230,7 +230,7 @@ func TestMockAPIWarAndRaidEndpoints(t *testing.T) {
 		t.Fatalf("unexpected league group payload: %#v", group)
 	}
 
-	raids, err := client.GetRaidLog(ctx, "#2PP", 2, "", "")
+	raids, err := client.GetRaidLog(ctx, "#2PP", clashy.PageOptions{Limit: 2})
 	if err != nil {
 		t.Fatalf("get raid log: %v", err)
 	}
@@ -257,7 +257,7 @@ func TestMockAPIMetadataAndLeagueEndpoints(t *testing.T) {
 	if location == nil || location.Name != "International" {
 		t.Fatalf("unexpected location: %#v", location)
 	}
-	clanLabels, err := client.GetClanLabels(ctx, 3, "", "")
+	clanLabels, err := client.GetClanLabels(ctx, clashy.PageOptions{Limit: 3})
 	if err != nil {
 		t.Fatalf("get clan labels: %v", err)
 	}
@@ -265,7 +265,7 @@ func TestMockAPIMetadataAndLeagueEndpoints(t *testing.T) {
 		t.Fatalf("unexpected clan labels: %#v", clanLabels)
 	}
 
-	playerLabels, err := client.GetPlayerLabels(ctx, 3, "", "")
+	playerLabels, err := client.GetPlayerLabels(ctx, clashy.PageOptions{Limit: 3})
 	if err != nil {
 		t.Fatalf("get player labels: %v", err)
 	}
@@ -273,7 +273,7 @@ func TestMockAPIMetadataAndLeagueEndpoints(t *testing.T) {
 		t.Fatalf("unexpected player labels: %#v", playerLabels)
 	}
 
-	rankings, err := client.GetLocationPlayers(ctx, 32000249, 3, "", "")
+	rankings, err := client.GetLocationPlayers(ctx, 32000249, clashy.PageOptions{Limit: 3})
 	if err != nil {
 		t.Fatalf("get location players: %v", err)
 	}
@@ -281,7 +281,7 @@ func TestMockAPIMetadataAndLeagueEndpoints(t *testing.T) {
 		t.Fatalf("unexpected player rankings: %#v", rankings)
 	}
 
-	leagues, err := client.SearchLeagues(ctx, 3, "", "")
+	leagues, err := client.SearchLeagues(ctx, clashy.PageOptions{Limit: 3})
 	if err != nil {
 		t.Fatalf("search leagues: %v", err)
 	}
