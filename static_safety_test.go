@@ -1,6 +1,9 @@
 package clashy
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestStaticDataAccessorsReturnIsolatedCopies(t *testing.T) {
 	staticData, err := LoadStaticData()
@@ -28,18 +31,34 @@ func TestStaticDataAccessorsReturnIsolatedCopies(t *testing.T) {
 	}
 }
 
-func TestSeasonalTroopOrderUsesLastDuplicateOccurrence(t *testing.T) {
-	indices := map[string][]int{}
-	for i, name := range SeasonalTroopOrder {
-		indices[name] = append(indices[name], i)
+func TestSeasonalTroopOrderUsesLastOccurrencesFromStaticData(t *testing.T) {
+	staticData, err := LoadStaticData()
+	if err != nil {
+		t.Fatalf("LoadStaticData: %v", err)
 	}
-	for _, name := range []string{"YEETer", "The Disarmer"} {
-		if got := len(indices[name]); got != 1 {
-			t.Fatalf("%s appears %d times, want once", name, got)
+
+	seasonalNames := make([]string, 0)
+	for _, troop := range staticData.Section("troops") {
+		seasonal, _ := troop["is_seasonal"].(bool)
+		name, _ := troop["name"].(string)
+		if seasonal && name != "" {
+			seasonalNames = append(seasonalNames, name)
 		}
 	}
-	if indices["YEETer"][0] >= indices["The Disarmer"][0] {
-		t.Fatalf("last-occurrence order not preserved: YEETer=%d Disarmer=%d", indices["YEETer"][0], indices["The Disarmer"][0])
+
+	last := make(map[string]int, len(seasonalNames))
+	for i, name := range seasonalNames {
+		last[name] = i
+	}
+	expected := make([]string, 0, len(last))
+	for i, name := range seasonalNames {
+		if last[name] == i {
+			expected = append(expected, name)
+		}
+	}
+
+	if !reflect.DeepEqual(SeasonalTroopOrder, expected) {
+		t.Fatalf("SeasonalTroopOrder = %v, want last-occurrence order %v", SeasonalTroopOrder, expected)
 	}
 }
 
