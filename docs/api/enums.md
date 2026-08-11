@@ -96,56 +96,6 @@ VillageClanCapital is Clan Capital.
 
 </div>
 
-<a id="loadgamedata"></a>
-
-## Load Game Data
-
-<p class="api-signature"><span class="api-kind">struct</span> <code>clashy.LoadGameData</code></p>
-
-LoadGameData describes when static game data should be loaded.
-
-<div class="api-field" id="loadgamedata-default" markdown="1">
-
-### `Default`
-
-<p><code>bool</code></p>
-
-Default uses the package's normal embedded static-data behavior.
-
-</div>
-
-<div class="api-field" id="loadgamedata-startuponly" markdown="1">
-
-### `StartupOnly`
-
-<p><code>bool</code></p>
-
-StartupOnly indicates static data should be loaded during client
-construction only.
-
-</div>
-
-<div class="api-field" id="loadgamedata-always" markdown="1">
-
-### `Always`
-
-<p><code>bool</code></p>
-
-Always indicates static data should be refreshed whenever supported by the
-caller's workflow.
-
-</div>
-
-<div class="api-field" id="loadgamedata-never" markdown="1">
-
-### `Never`
-
-<p><code>bool</code></p>
-
-Never indicates static data should not be loaded.
-
-</div>
-
 <a id="clantype"></a>
 
 ## Clan Type

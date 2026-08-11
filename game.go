@@ -14,19 +14,21 @@ var armyHeroPattern = regexp.MustCompile(`^(\d+)(?:m\d+)?(?:p(\d+))?(?:e(\d+)(?:
 // heroes, pets, and hero equipment.
 type StaticUnit struct {
 	// Name is the unit or equipment display name.
-	Name string
+	Name string `json:"name"`
 	// Level is the selected level for this static lookup.
-	Level int
+	Level int `json:"level"`
 	// MaxLevel is the maximum level found in static data.
-	MaxLevel int
+	MaxLevel int `json:"maxLevel"`
 	// Village identifies the village this object belongs to.
-	Village string
+	Village string `json:"village"`
 	// UpgradeCost is the cost for the selected level when static data includes
 	// it.
-	UpgradeCost int
+	UpgradeCost int `json:"upgradeCost"`
 	// UpgradeTime is the upgrade duration for the selected level when static data
 	// includes it.
-	UpgradeTime time.Duration
+	UpgradeTime time.Duration `json:"upgradeTime"`
+	// Rarity is populated for hero equipment when static data includes it.
+	Rarity string `json:"rarity,omitempty"`
 }
 
 func fillStaticUnit(unit *StaticUnit, data map[string]any, level int) {
@@ -98,7 +100,7 @@ func secondsFromParts(parts ...any) int {
 	return total
 }
 
-// Troop is a player troop or static troop lookup result.
+// Troop is a troop from a player response.
 type Troop struct {
 	// Name is the troop display name.
 	Name string `json:"name"`
@@ -111,7 +113,6 @@ type Troop struct {
 	Village string `json:"village"`
 	// SuperTroopIsActive reports whether a super troop boost is active.
 	SuperTroopIsActive bool `json:"superTroopIsActive"`
-	StaticUnit
 }
 
 // IsHomeBase reports whether the troop belongs to the home village.
@@ -132,14 +133,14 @@ func (t Troop) IsSuperTroop() bool {
 
 // Static returns the embedded static-data record matching this troop's name,
 // village, and level.
-func (t Troop) Static(c *Client) *Troop {
+func (t Troop) Static(c *Client) *StaticUnit {
 	if c == nil {
 		return nil
 	}
 	return c.GetTroop(t.Name, t.IsHomeBase(), t.Level)
 }
 
-// Spell is a player spell or static spell lookup result.
+// Spell is a spell from a player response.
 type Spell struct {
 	// Name is the spell display name.
 	Name string `json:"name"`
@@ -149,19 +150,18 @@ type Spell struct {
 	MaxLevel int `json:"maxLevel"`
 	// Village identifies the spell's village when static data provides one.
 	Village string `json:"village"`
-	StaticUnit
 }
 
 // Static returns the embedded static-data record matching this spell's name and
 // level.
-func (s Spell) Static(c *Client) *Spell {
+func (s Spell) Static(c *Client) *StaticUnit {
 	if c == nil {
 		return nil
 	}
 	return c.GetSpell(s.Name, s.Level)
 }
 
-// Hero is a player hero or static hero lookup result.
+// Hero is a hero from a player response.
 type Hero struct {
 	// Name is the hero display name.
 	Name string `json:"name"`
@@ -174,19 +174,18 @@ type Hero struct {
 	// Equipment contains equipment currently assigned to this hero when the API
 	// includes loadout data.
 	Equipment []Equipment `json:"equipment"`
-	StaticUnit
 }
 
 // Static returns the embedded static-data record matching this hero's name and
 // level.
-func (h Hero) Static(c *Client) *Hero {
+func (h Hero) Static(c *Client) *StaticUnit {
 	if c == nil {
 		return nil
 	}
 	return c.GetHero(h.Name, h.Level)
 }
 
-// Pet is a hero pet from a player response or static lookup.
+// Pet is a hero pet from a player response.
 type Pet struct {
 	// Name is the pet display name.
 	Name string `json:"name"`
@@ -196,19 +195,18 @@ type Pet struct {
 	MaxLevel int `json:"maxLevel"`
 	// Village identifies the pet's village.
 	Village string `json:"village"`
-	StaticUnit
 }
 
 // Static returns the embedded static-data record matching this pet's name and
 // level.
-func (p Pet) Static(c *Client) *Pet {
+func (p Pet) Static(c *Client) *StaticUnit {
 	if c == nil {
 		return nil
 	}
 	return c.GetPet(p.Name, p.Level)
 }
 
-// Equipment is hero equipment from a player response or static lookup.
+// Equipment is hero equipment from a player response.
 type Equipment struct {
 	// Name is the equipment display name.
 	Name string `json:"name"`
@@ -220,12 +218,11 @@ type Equipment struct {
 	Village string `json:"village"`
 	// Rarity is the equipment rarity when static data includes it.
 	Rarity string `json:"rarity"`
-	StaticUnit
 }
 
 // Static returns the embedded static-data record matching this equipment's name
 // and level.
-func (e Equipment) Static(c *Client) *Equipment {
+func (e Equipment) Static(c *Client) *StaticUnit {
 	if c == nil {
 		return nil
 	}
@@ -292,22 +289,41 @@ func ParseArmyRecipe(static *StaticData, link string) ArmyRecipe {
 				if g == nil {
 					continue
 				}
-				heroID, _ := strconv.Atoi(g[1])
+				heroID, err := strconv.Atoi(g[1])
+				if err != nil {
+					continue
+				}
+				heroData := static.lookupByID(HeroBaseID + heroID)
+				if heroData == nil {
+					continue
+				}
 				loadout := HeroLoadout{
-					Hero: buildHeroFromStatic(static.LookupByID(HeroBaseID+heroID), 1),
+					Hero: buildHeroFromStatic(heroData, 1),
 				}
 				if len(g) > 2 && g[2] != "" {
-					petID, _ := strconv.Atoi(g[2])
-					pet := buildPetFromStatic(static.LookupByID(PetBaseID+petID), 1)
-					loadout.Pet = &pet
+					petID, parseErr := strconv.Atoi(g[2])
+					if parseErr == nil {
+						if petData := static.lookupByID(PetBaseID + petID); petData != nil {
+							pet := buildPetFromStatic(petData, 1)
+							loadout.Pet = &pet
+						}
+					}
 				}
 				if len(g) > 3 && g[3] != "" {
-					eq1, _ := strconv.Atoi(g[3])
-					loadout.Equipment = append(loadout.Equipment, buildEquipmentFromStatic(static.LookupByID(EquipmentBaseID+eq1), 1))
+					eq1, parseErr := strconv.Atoi(g[3])
+					if parseErr == nil {
+						if equipmentData := static.lookupByID(EquipmentBaseID + eq1); equipmentData != nil {
+							loadout.Equipment = append(loadout.Equipment, buildEquipmentFromStatic(equipmentData, 1))
+						}
+					}
 				}
 				if len(g) > 4 && g[4] != "" {
-					eq2, _ := strconv.Atoi(g[4])
-					loadout.Equipment = append(loadout.Equipment, buildEquipmentFromStatic(static.LookupByID(EquipmentBaseID+eq2), 1))
+					eq2, parseErr := strconv.Atoi(g[4])
+					if parseErr == nil {
+						if equipmentData := static.lookupByID(EquipmentBaseID + eq2); equipmentData != nil {
+							loadout.Equipment = append(loadout.Equipment, buildEquipmentFromStatic(equipmentData, 1))
+						}
+					}
 				}
 				recipe.HeroesLoadout = append(recipe.HeroesLoadout, loadout)
 			}
@@ -368,17 +384,24 @@ func parseArmyItems(static *StaticData, payload string, baseID int, troops bool,
 		if len(split) != 2 {
 			continue
 		}
-		qty, _ := strconv.Atoi(split[0])
-		id, _ := strconv.Atoi(split[1])
+		qty, qtyErr := strconv.Atoi(split[0])
+		id, idErr := strconv.Atoi(split[1])
+		if qtyErr != nil || idErr != nil || qty <= 0 || id < 0 {
+			continue
+		}
+		data := static.lookupByID(baseID + id)
+		if data == nil {
+			continue
+		}
 		if troops {
-			tc := TroopCount{Troop: buildTroopFromStatic(static.LookupByID(baseID+id), 1), Quantity: qty}
+			tc := TroopCount{Troop: buildTroopFromStatic(data, 1), Quantity: qty}
 			if clanCastle {
 				recipe.ClanCastleTroops = append(recipe.ClanCastleTroops, tc)
 			} else {
 				recipe.Troops = append(recipe.Troops, tc)
 			}
 		} else {
-			sc := SpellCount{Spell: buildSpellFromStatic(static.LookupByID(baseID+id), 1), Quantity: qty}
+			sc := SpellCount{Spell: buildSpellFromStatic(data, 1), Quantity: qty}
 			if clanCastle {
 				recipe.ClanCastleSpells = append(recipe.ClanCastleSpells, sc)
 			} else {
@@ -389,38 +412,35 @@ func parseArmyItems(static *StaticData, payload string, baseID int, troops bool,
 }
 
 func buildTroopFromStatic(data map[string]any, level int) Troop {
-	t := Troop{}
-	fillStaticUnit(&t.StaticUnit, data, level)
-	t.Name, t.Level, t.MaxLevel, t.Village = t.StaticUnit.Name, t.StaticUnit.Level, t.StaticUnit.MaxLevel, t.StaticUnit.Village
-	return t
+	unit := buildStaticUnit(data, level)
+	return Troop{Name: unit.Name, Level: unit.Level, MaxLevel: unit.MaxLevel, Village: unit.Village}
 }
 
 func buildSpellFromStatic(data map[string]any, level int) Spell {
-	s := Spell{}
-	fillStaticUnit(&s.StaticUnit, data, level)
-	s.Name, s.Level, s.MaxLevel, s.Village = s.StaticUnit.Name, s.StaticUnit.Level, s.StaticUnit.MaxLevel, s.StaticUnit.Village
-	return s
+	unit := buildStaticUnit(data, level)
+	return Spell{Name: unit.Name, Level: unit.Level, MaxLevel: unit.MaxLevel, Village: unit.Village}
 }
 
 func buildHeroFromStatic(data map[string]any, level int) Hero {
-	h := Hero{}
-	fillStaticUnit(&h.StaticUnit, data, level)
-	h.Name, h.Level, h.MaxLevel, h.Village = h.StaticUnit.Name, h.StaticUnit.Level, h.StaticUnit.MaxLevel, h.StaticUnit.Village
-	return h
+	unit := buildStaticUnit(data, level)
+	return Hero{Name: unit.Name, Level: unit.Level, MaxLevel: unit.MaxLevel, Village: unit.Village}
 }
 
 func buildPetFromStatic(data map[string]any, level int) Pet {
-	p := Pet{}
-	fillStaticUnit(&p.StaticUnit, data, level)
-	p.Name, p.Level, p.MaxLevel, p.Village = p.StaticUnit.Name, p.StaticUnit.Level, p.StaticUnit.MaxLevel, p.StaticUnit.Village
-	return p
+	unit := buildStaticUnit(data, level)
+	return Pet{Name: unit.Name, Level: unit.Level, MaxLevel: unit.MaxLevel, Village: unit.Village}
 }
 
 func buildEquipmentFromStatic(data map[string]any, level int) Equipment {
-	e := Equipment{}
-	fillStaticUnit(&e.StaticUnit, data, level)
-	e.Name, e.Level, e.MaxLevel, e.Village = e.StaticUnit.Name, e.StaticUnit.Level, e.StaticUnit.MaxLevel, e.StaticUnit.Village
-	return e
+	unit := buildStaticUnit(data, level)
+	return Equipment{Name: unit.Name, Level: unit.Level, MaxLevel: unit.MaxLevel, Village: unit.Village, Rarity: unit.Rarity}
+}
+
+func buildStaticUnit(data map[string]any, level int) StaticUnit {
+	unit := StaticUnit{}
+	fillStaticUnit(&unit, data, level)
+	unit.Rarity, _ = data["rarity"].(string)
+	return unit
 }
 
 // AccountData is a thin wrapper around arbitrary account-link data.

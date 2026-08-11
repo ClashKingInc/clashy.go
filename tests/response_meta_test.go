@@ -47,7 +47,7 @@ func TestDirectReturnedModelsCarryResponseMeta(t *testing.T) {
 		t.Fatalf("login with tokens: %v", err)
 	}
 
-	locations, err := client.SearchLocations(context.Background(), 0, "", "")
+	locations, err := client.SearchLocations(context.Background(), clashy.PageOptions{})
 	if err != nil {
 		t.Fatalf("search locations: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestDirectReturnedModelsCarryResponseMeta(t *testing.T) {
 		t.Fatalf("expected single location retry-after 17, got %d", location.RetryAfter())
 	}
 
-	warLog, err := client.GetWarLog(context.Background(), "#2PP", 0, "", "")
+	warLog, err := client.GetWarLog(context.Background(), "#2PP", clashy.PageOptions{})
 	if err != nil {
 		t.Fatalf("get war log: %v", err)
 	}

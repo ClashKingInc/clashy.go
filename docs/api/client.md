@@ -10,9 +10,9 @@ Client construction, authentication, request behavior, and high-level Clash API 
 
 Client is the high-level Clash API client.
 
-A Client owns its configuration, HTTP transport, and embedded static-data
-indexes. It is safe to reuse a single client across request handlers as long
-as callers pass appropriate contexts.
+A Client owns its configuration and HTTP transport. It is safe to reuse a
+single client across request handlers as long as callers pass appropriate
+contexts.
 
 <a id="clientconfig"></a>
 
@@ -21,7 +21,7 @@ as callers pass appropriate contexts.
 <p class="api-signature"><span class="api-kind">struct</span> <code>clashy.ClientConfig</code></p>
 
 ClientConfig controls API endpoints, authentication behavior, request
-throttling, response caching, and static-data loading.
+throttling, response caching, and transport behavior.
 
 Most callers should start from DefaultClientConfig and override only the
 fields that differ for their service. The zero value is not the recommended
@@ -70,6 +70,27 @@ Timeout is applied to the underlying http.Client.
 
 </div>
 
+<div class="api-field" id="clientconfig-maxbaseurlconns" markdown="1">
+
+### `MaxBaseURLConns`
+
+<p><code>int</code></p>
+
+MaxBaseURLConns optionally caps total active and idle connections to the
+configured API base URL.
+
+</div>
+
+<div class="api-field" id="clientconfig-idleconntimeout" markdown="1">
+
+### `IdleConnTimeout`
+
+<p><code>time.Duration</code></p>
+
+IdleConnTimeout controls how long idle HTTP connections remain reusable.
+
+</div>
+
 <div class="api-field" id="clientconfig-baseurl" markdown="1">
 
 ### `BaseURL`
@@ -112,17 +133,6 @@ Realtime adds realtime=true to current-war requests that support it.
 
 </div>
 
-<div class="api-field" id="clientconfig-correcttags" markdown="1">
-
-### `CorrectTags`
-
-<p><code>bool</code></p>
-
-CorrectTags enables Clash tag normalization before tags are placed in API
-paths or query strings.
-
-</div>
-
 <div class="api-field" id="clientconfig-cachemaxsize" markdown="1">
 
 ### `CacheMaxSize`
@@ -130,6 +140,18 @@ paths or query strings.
 <p><code>int</code></p>
 
 CacheMaxSize bounds the number of GET responses retained in memory.
+
+</div>
+
+<div class="api-field" id="clientconfig-cachemaxentrybytes" markdown="1">
+
+### `CacheMaxEntryBytes`
+
+<p><code>int</code></p>
+
+CacheMaxEntryBytes prevents unusually large responses from being retained
+in the in-memory cache. A value less than or equal to zero disables this
+per-entry limit.
 
 </div>
 
@@ -150,38 +172,6 @@ LookupCache allows GET requests to return fresh cached responses.
 <p><code>bool</code></p>
 
 UpdateCache allows successful GET responses to refresh the in-memory cache.
-
-</div>
-
-<div class="api-field" id="clientconfig-ignorecachederrors" markdown="1">
-
-### `IgnoreCachedErrors`
-
-<p><code>[]int</code></p>
-
-IgnoreCachedErrors is reserved for compatibility with callers that model
-cache behavior after coc.py; current request handling does not use it.
-
-</div>
-
-<div class="api-field" id="clientconfig-rawjson" markdown="1">
-
-### `RawJSON`
-
-<p><code>bool</code></p>
-
-RawJSON is reserved for callers that need raw response capture; current
-high-level methods unmarshal into typed models.
-
-</div>
-
-<div class="api-field" id="clientconfig-loadgamedata" markdown="1">
-
-### `LoadGameData`
-
-<p><code><a href="../enums/#loadgamedata">LoadGameData</a></code></p>
-
-LoadGameData describes when static game data should be loaded.
 
 </div>
 
@@ -327,6 +317,45 @@ After is a pagination cursor.
 
 </div>
 
+<a id="pageoptions"></a>
+
+## Page Options
+
+<p class="api-signature"><span class="api-kind">struct</span> <code>clashy.PageOptions</code></p>
+
+PageOptions contains the optional cursor pagination values used by list
+endpoints.
+
+<div class="api-field" id="pageoptions-limit" markdown="1">
+
+### `Limit`
+
+<p><code>int</code></p>
+
+Limit controls the requested page size.
+
+</div>
+
+<div class="api-field" id="pageoptions-before" markdown="1">
+
+### `Before`
+
+<p><code>string</code></p>
+
+Before is the backward pagination cursor.
+
+</div>
+
+<div class="api-field" id="pageoptions-after" markdown="1">
+
+### `After`
+
+<p><code>string</code></p>
+
+After is the forward pagination cursor.
+
+</div>
+
 <a id="requestoptions"></a>
 
 ## Request Options
@@ -366,6 +395,44 @@ SkipAuth prevents Do from adding an Authorization header.
 
 </div>
 
+<a id="httpresponse"></a>
+
+## HTTPResponse
+
+<p class="api-signature"><span class="api-kind">struct</span> <code>clashy.HTTPResponse</code></p>
+
+HTTPResponse is the result of a low-level HTTP request.
+
+<div class="api-field" id="httpresponse-body" markdown="1">
+
+### `Body`
+
+<p><code>[]byte</code></p>
+
+Body is the decoded response payload.
+
+</div>
+
+<div class="api-field" id="httpresponse-statuscode" markdown="1">
+
+### `StatusCode`
+
+<p><code>int</code></p>
+
+StatusCode is the HTTP response status.
+
+</div>
+
+<div class="api-field" id="httpresponse-retryafter" markdown="1">
+
+### `RetryAfter`
+
+<p><code>time.Duration</code></p>
+
+RetryAfter is the remaining server-declared cache lifetime.
+
+</div>
+
 <a id="httpclient"></a>
 
 ## HTTPClient
@@ -378,6 +445,15 @@ Most callers should use Client instead. HTTPClient is exported so advanced
 integrations can build compatible request flows while reusing token rotation,
 throttling, compression handling, cache storage, and typed error mapping.
 
+<a id="limiter"></a>
+
+## Limiter
+
+<p class="api-signature"><span class="api-kind">struct</span> <code>clashy.Limiter</code></p>
+
+Limiter gates request starts with a strict rolling one-second window and
+also caps concurrent in-flight work.
+
 ## Client Methods
 
 <a id="client-close"></a>
@@ -387,9 +463,6 @@ throttling, compression handling, cache storage, and typed error mapping.
 <p class="api-signature api-function-signature"><code>clashy.Client.Close()<span class="api-return-arrow"> -> </span><span class="api-return">error</span></code></p>
 
 Close releases client resources.
-
-The current implementation does not hold resources that need explicit
-teardown, so Close returns nil.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
@@ -490,16 +563,14 @@ GetClan fetches a clan profile by tag.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetClanLabels(<span class="api-param">ctx: context.Context</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]Label</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetClanLabels(<span class="api-param">ctx: context.Context</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]Label</span>, <span class="api-return">error</span>)</code></p>
 
 GetClanLabels fetches clan labels with optional pagination.
 
 <dl class="api-parameters">
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -633,7 +704,7 @@ current war.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetEquipment(<span class="api-param">name: string</span>, <span class="api-param">level: int</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*Equipment</span></code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetEquipment(<span class="api-param">name: string</span>, <span class="api-param">level: int</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*StaticUnit</span></code></p>
 
 GetEquipment looks up hero equipment by name and level in embedded static
 data.
@@ -647,7 +718,7 @@ data.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
-<code>*<a href="../game-objects/#equipment">Equipment</a></code> </dd>
+<code>*<a href="../game-objects/#staticunit">StaticUnit</a></code> </dd>
 </dl>
 
 </div>
@@ -678,7 +749,7 @@ by name.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetHero(<span class="api-param">name: string</span>, <span class="api-param">level: int</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*Hero</span></code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetHero(<span class="api-param">name: string</span>, <span class="api-param">level: int</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*StaticUnit</span></code></p>
 
 GetHero looks up a hero by name and level in embedded static data.
 
@@ -691,7 +762,7 @@ GetHero looks up a hero by name and level in embedded static data.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
-<code>*<a href="../game-objects/#hero">Hero</a></code> </dd>
+<code>*<a href="../game-objects/#staticunit">StaticUnit</a></code> </dd>
 </dl>
 
 </div>
@@ -814,7 +885,7 @@ GetLocation fetches a location by numeric ID.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClans(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: int</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClans(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: int</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
 
 GetLocationClans fetches home-village clan rankings for a numeric location ID.
 
@@ -822,9 +893,7 @@ GetLocationClans fetches home-village clan rankings for a numeric location ID.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>locationID</strong> (<code>int</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -839,7 +908,7 @@ GetLocationClans fetches home-village clan rankings for a numeric location ID.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClansBuilderBase(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: int</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClansBuilderBase(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: int</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
 
 GetLocationClansBuilderBase fetches Builder Base clan rankings for a numeric
 location ID.
@@ -848,9 +917,7 @@ location ID.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>locationID</strong> (<code>int</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -865,7 +932,7 @@ location ID.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClansBuilderBaseByLocationID(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: string</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClansBuilderBaseByLocationID(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: string</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
 
 GetLocationClansBuilderBaseByLocationID fetches Builder Base clan rankings
 for a location ID string.
@@ -874,9 +941,7 @@ for a location ID string.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>locationID</strong> (<code>string</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -891,7 +956,7 @@ for a location ID string.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClansByLocationID(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: string</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClansByLocationID(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: string</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
 
 GetLocationClansByLocationID fetches home-village clan rankings for a
 location ID string.
@@ -900,9 +965,7 @@ location ID string.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>locationID</strong> (<code>string</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -917,7 +980,7 @@ location ID string.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClansCapital(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: int</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClansCapital(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: int</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
 
 GetLocationClansCapital fetches Clan Capital clan rankings for a numeric
 location ID.
@@ -926,9 +989,7 @@ location ID.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>locationID</strong> (<code>int</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -943,7 +1004,7 @@ location ID.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClansCapitalByLocationID(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: string</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationClansCapitalByLocationID(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: string</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedClan</span>, <span class="api-return">error</span>)</code></p>
 
 GetLocationClansCapitalByLocationID fetches Clan Capital clan rankings for a
 location ID string.
@@ -952,9 +1013,7 @@ location ID string.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>locationID</strong> (<code>string</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -994,7 +1053,7 @@ It returns nil, nil when no matching location is found.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationPlayers(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: int</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedPlayer</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationPlayers(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: int</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedPlayer</span>, <span class="api-return">error</span>)</code></p>
 
 GetLocationPlayers fetches home-village player rankings for a numeric
 location ID.
@@ -1003,9 +1062,7 @@ location ID.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>locationID</strong> (<code>int</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1020,7 +1077,7 @@ location ID.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationPlayersBuilderBase(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: int</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedPlayer</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationPlayersBuilderBase(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: int</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedPlayer</span>, <span class="api-return">error</span>)</code></p>
 
 GetLocationPlayersBuilderBase fetches Builder Base player rankings for a
 numeric location ID.
@@ -1029,9 +1086,7 @@ numeric location ID.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>locationID</strong> (<code>int</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1046,7 +1101,7 @@ numeric location ID.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationPlayersBuilderBaseByLocationID(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: string</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedPlayer</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationPlayersBuilderBaseByLocationID(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: string</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedPlayer</span>, <span class="api-return">error</span>)</code></p>
 
 GetLocationPlayersBuilderBaseByLocationID fetches Builder Base player
 rankings for a location ID string.
@@ -1055,9 +1110,7 @@ rankings for a location ID string.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>locationID</strong> (<code>string</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1072,7 +1125,7 @@ rankings for a location ID string.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationPlayersByLocationID(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: string</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedPlayer</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetLocationPlayersByLocationID(<span class="api-param">ctx: context.Context</span>, <span class="api-param">locationID: string</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RankedPlayer</span>, <span class="api-return">error</span>)</code></p>
 
 GetLocationPlayersByLocationID fetches home-village player rankings for a
 location ID string.
@@ -1081,9 +1134,7 @@ location ID string.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>locationID</strong> (<code>string</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1098,7 +1149,7 @@ location ID string.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetMembers(<span class="api-param">ctx: context.Context</span>, <span class="api-param">clanTag: string</span>, <span class="api-param">limit: int</span>, <span class="api-param">after: string</span>, <span class="api-param">before: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]ClanMember</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetMembers(<span class="api-param">ctx: context.Context</span>, <span class="api-param">clanTag: string</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]ClanMember</span>, <span class="api-return">error</span>)</code></p>
 
 GetMembers fetches a clan member page by clan tag.
 
@@ -1106,9 +1157,7 @@ GetMembers fetches a clan member page by clan tag.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>clanTag</strong> (<code>string</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1123,7 +1172,7 @@ GetMembers fetches a clan member page by clan tag.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetPet(<span class="api-param">name: string</span>, <span class="api-param">level: int</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*Pet</span></code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetPet(<span class="api-param">name: string</span>, <span class="api-param">level: int</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*StaticUnit</span></code></p>
 
 GetPet looks up a pet by name and level in embedded static data.
 
@@ -1136,7 +1185,7 @@ GetPet looks up a pet by name and level in embedded static data.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
-<code>*<a href="../game-objects/#pet">Pet</a></code> </dd>
+<code>*<a href="../game-objects/#staticunit">StaticUnit</a></code> </dd>
 </dl>
 
 </div>
@@ -1167,16 +1216,14 @@ GetPlayer fetches a player profile by tag.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetPlayerLabels(<span class="api-param">ctx: context.Context</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]Label</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetPlayerLabels(<span class="api-param">ctx: context.Context</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]Label</span>, <span class="api-return">error</span>)</code></p>
 
 GetPlayerLabels fetches player labels with optional pagination.
 
 <dl class="api-parameters">
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1191,16 +1238,16 @@ GetPlayerLabels fetches player labels with optional pagination.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetPlayerLeagueGroup(<span class="api-param">ctx: context.Context</span>, <span class="api-param">playerTag: string</span>, <span class="api-param">leagueGroupTag: string</span>, <span class="api-param">leagueSeasonID: int</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">*LeagueTierGroup</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetPlayerLeagueGroup(<span class="api-param">ctx: context.Context</span>, <span class="api-param">playerTag: string</span>, <span class="api-param">leagueGroupTag: string</span>, <span class="api-param">leagueSeasonID: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">*LeagueTierGroup</span>, <span class="api-return">error</span>)</code></p>
 
-GetPlayerLeagueGroup fetches a legend league group and scopes it to a player.
+GetPlayerLeagueGroup fetches a ranked group and scopes it to a player.
 
 <dl class="api-parameters">
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>playerTag</strong> (<code>string</code>)</p>
 <p><strong>leagueGroupTag</strong> (<code>string</code>)</p>
-<p><strong>leagueSeasonID</strong> (<code>int</code>)</p>
+<p><strong>leagueSeasonID</strong> (<code>string</code>)</p>
 </dd>
 </dl>
 
@@ -1237,7 +1284,7 @@ GetPlayerLeagueHistory fetches a player's legend league history.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetRaidLog(<span class="api-param">ctx: context.Context</span>, <span class="api-param">clanTag: string</span>, <span class="api-param">limit: int</span>, <span class="api-param">after: string</span>, <span class="api-param">before: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RaidLogEntry</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetRaidLog(<span class="api-param">ctx: context.Context</span>, <span class="api-param">clanTag: string</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]RaidLogEntry</span>, <span class="api-return">error</span>)</code></p>
 
 GetRaidLog fetches Clan Capital raid weekend log entries for a clan.
 
@@ -1245,9 +1292,7 @@ GetRaidLog fetches Clan Capital raid weekend log entries for a clan.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>clanTag</strong> (<code>string</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1309,7 +1354,7 @@ Passing leagueID 0 uses the default legend league ID.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetSpell(<span class="api-param">name: string</span>, <span class="api-param">level: int</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*Spell</span></code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetSpell(<span class="api-param">name: string</span>, <span class="api-param">level: int</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*StaticUnit</span></code></p>
 
 GetSpell looks up a spell by name and level in embedded static data.
 
@@ -1322,7 +1367,7 @@ GetSpell looks up a spell by name and level in embedded static data.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
-<code>*<a href="../game-objects/#spell">Spell</a></code> </dd>
+<code>*<a href="../game-objects/#staticunit">StaticUnit</a></code> </dd>
 </dl>
 
 </div>
@@ -1352,7 +1397,7 @@ GetTranslation returns a translation entry by static-data translation ID.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetTroop(<span class="api-param">name: string</span>, <span class="api-param">isHomeVillage: bool</span>, <span class="api-param">level: int</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*Troop</span></code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetTroop(<span class="api-param">name: string</span>, <span class="api-param">isHomeVillage: bool</span>, <span class="api-param">level: int</span>)<span class="api-return-arrow"> -> </span><span class="api-return">*StaticUnit</span></code></p>
 
 GetTroop looks up a troop by name, village, and level in embedded static data.
 
@@ -1366,7 +1411,7 @@ GetTroop looks up a troop by name, village, and level in embedded static data.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
-<code>*<a href="../game-objects/#troop">Troop</a></code> </dd>
+<code>*<a href="../game-objects/#staticunit">StaticUnit</a></code> </dd>
 </dl>
 
 </div>
@@ -1397,7 +1442,7 @@ GetWarLeague fetches a Clan War League tier by ID.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.GetWarLog(<span class="api-param">ctx: context.Context</span>, <span class="api-param">clanTag: string</span>, <span class="api-param">limit: int</span>, <span class="api-param">after: string</span>, <span class="api-param">before: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]ClanWarLogEntry</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.GetWarLog(<span class="api-param">ctx: context.Context</span>, <span class="api-param">clanTag: string</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]ClanWarLogEntry</span>, <span class="api-return">error</span>)</code></p>
 
 GetWarLog fetches public war log entries for a clan.
 
@@ -1405,9 +1450,7 @@ GetWarLog fetches public war log entries for a clan.
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
 <p><strong>clanTag</strong> (<code>string</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1516,7 +1559,7 @@ client's static data.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.SearchBuilderBaseLeagues(<span class="api-param">ctx: context.Context</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]League</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.SearchBuilderBaseLeagues(<span class="api-param">ctx: context.Context</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]League</span>, <span class="api-return">error</span>)</code></p>
 
 SearchBuilderBaseLeagues fetches Builder Base leagues with optional
 pagination.
@@ -1524,9 +1567,7 @@ pagination.
 <dl class="api-parameters">
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1541,16 +1582,14 @@ pagination.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.SearchCapitalLeagues(<span class="api-param">ctx: context.Context</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]League</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.SearchCapitalLeagues(<span class="api-param">ctx: context.Context</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]League</span>, <span class="api-return">error</span>)</code></p>
 
 SearchCapitalLeagues fetches Clan Capital leagues with optional pagination.
 
 <dl class="api-parameters">
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1587,16 +1626,14 @@ SearchClans searches clans using the provided optional filters.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.SearchLeagues(<span class="api-param">ctx: context.Context</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]League</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.SearchLeagues(<span class="api-param">ctx: context.Context</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]League</span>, <span class="api-return">error</span>)</code></p>
 
 SearchLeagues fetches home-village leagues with optional pagination.
 
 <dl class="api-parameters">
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1611,16 +1648,14 @@ SearchLeagues fetches home-village leagues with optional pagination.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.SearchLocations(<span class="api-param">ctx: context.Context</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]Location</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.SearchLocations(<span class="api-param">ctx: context.Context</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]Location</span>, <span class="api-return">error</span>)</code></p>
 
 SearchLocations fetches API locations with optional pagination.
 
 <dl class="api-parameters">
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1635,16 +1670,14 @@ SearchLocations fetches API locations with optional pagination.
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.Client.SearchWarLeagues(<span class="api-param">ctx: context.Context</span>, <span class="api-param">limit: int</span>, <span class="api-param">before: string</span>, <span class="api-param">after: string</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]League</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.Client.SearchWarLeagues(<span class="api-param">ctx: context.Context</span>, <span class="api-param">page: PageOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]League</span>, <span class="api-return">error</span>)</code></p>
 
 SearchWarLeagues fetches Clan War League tiers with optional pagination.
 
 <dl class="api-parameters">
 <dt>Parameters:</dt><dd>
 <p><strong>ctx</strong> (<code>context.Context</code>)</p>
-<p><strong>limit</strong> (<code>int</code>)</p>
-<p><strong>before</strong> (<code>string</code>)</p>
-<p><strong>after</strong> (<code>string</code>)</p>
+<p><strong>page</strong> (<code><a href="#pageoptions">PageOptions</a></code>)</p>
 </dd>
 </dl>
 
@@ -1666,29 +1699,6 @@ StaticData returns the client's embedded static-data index.
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
 <code>*<a href="../static-data/#staticdata">StaticData</a></code> </dd>
-</dl>
-
-</div>
-
-<a id="client-updatestatic"></a>
-
-<div class="api-function" markdown="1">
-
-<p class="api-signature api-function-signature"><code>clashy.Client.UpdateStatic(<span class="api-param">ctx: context.Context</span>)<span class="api-return-arrow"> -> </span><span class="api-return">error</span></code></p>
-
-UpdateStatic downloads the latest ClashKing static-data and translation JSON,
-writes the embedded source files, and refreshes this client's in-memory
-StaticData.
-
-<dl class="api-parameters">
-<dt>Parameters:</dt><dd>
-<p><strong>ctx</strong> (<code>context.Context</code>)</p>
-</dd>
-</dl>
-
-<dl class="api-parameters">
-<dt>Return type:</dt><dd>
-<code>error</code> </dd>
 </dl>
 
 </div>
@@ -1718,16 +1728,27 @@ VerifyPlayerToken verifies an in-game player API token.
 
 ## HTTPClient Methods
 
+<a id="httpclient-closeidleconnections"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.HTTPClient.CloseIdleConnections()</code></p>
+
+CloseIdleConnections closes idle keep-alive connections owned by this
+client's transport.
+
+</div>
+
 <a id="httpclient-do"></a>
 
 <div class="api-function" markdown="1">
 
-<p class="api-signature api-function-signature"><code>clashy.HTTPClient.Do(<span class="api-param">ctx: context.Context</span>, <span class="api-param">method: string</span>, <span class="api-param">fullURL: string</span>, <span class="api-param">body: any</span>, <span class="api-param">options: RequestOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">[]byte</span>, <span class="api-return">int</span>, <span class="api-return">int</span>, <span class="api-return">error</span>)</code></p>
+<p class="api-signature api-function-signature"><code>clashy.HTTPClient.Do(<span class="api-param">ctx: context.Context</span>, <span class="api-param">method: string</span>, <span class="api-param">fullURL: string</span>, <span class="api-param">body: any</span>, <span class="api-param">options: RequestOptions</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">HTTPResponse</span>, <span class="api-return">error</span>)</code></p>
 
-Do sends one HTTP request and returns the response body, status code, retry
-cache duration in seconds, and error.
+Do sends one HTTP request and returns its named result.
 
-Non-2xx API responses are converted into the package's typed HTTP errors.
+Non-2xx API responses return the HTTPResponse alongside the package's typed
+HTTP error.
 Successful GET responses can be read from or written to the in-memory cache
 depending on RequestOptions.
 
@@ -1743,7 +1764,7 @@ depending on RequestOptions.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
-<code>[]byte</code> <code>int</code> <code>int</code> <code>error</code> </dd>
+<code><a href="#httpresponse">HTTPResponse</a></code> <code>error</code> </dd>
 </dl>
 
 </div>
@@ -1793,6 +1814,31 @@ Tokens are rotated one per request. Passing no tokens clears authentication.
 
 </div>
 
+## Limiter Methods
+
+<a id="limiter-acquire"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.Limiter.Acquire(<span class="api-param">ctx: context.Context</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">func()</span>, <span class="api-return">error</span>)</code></p>
+
+Acquire waits until starting one more operation stays within both the RPS
+and in-flight limits. The returned release function must be called once the
+operation finishes.
+
+<dl class="api-parameters">
+<dt>Parameters:</dt><dd>
+<p><strong>ctx</strong> (<code>context.Context</code>)</p>
+</dd>
+</dl>
+
+<dl class="api-parameters">
+<dt>Return type:</dt><dd>
+<code>func()</code> <code>error</code> </dd>
+</dl>
+
+</div>
+
 ## Functions
 
 <a id="newclient"></a>
@@ -1801,7 +1847,8 @@ Tokens are rotated one per request. Passing no tokens clears authentication.
 
 <p class="api-signature api-function-signature"><code>clashy.NewClient(<span class="api-param">cfg: ClientConfig</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">*Client</span>, <span class="api-return">error</span>)</code></p>
 
-NewClient constructs a Client from cfg and loads embedded static data.
+NewClient constructs a Client from cfg. Embedded static data is parsed lazily
+when a static-data helper is first used.
 
 If cfg.BaseURL is empty, DefaultClientConfig is used. BaseURL and
 DeveloperBaseURL are normalized by removing trailing slashes.
@@ -1828,9 +1875,9 @@ DeveloperBaseURL are normalized by removing trailing slashes.
 DefaultClientConfig returns the recommended baseline configuration for the
 official Clash of Clans API.
 
-The defaults enable tag correction, GET response caching, embedded static
-data, a 30 second timeout, and a conservative request throttle. Callers using
-a ClashKing proxy typically override BaseURL and may enable Realtime.
+The defaults enable GET response caching, a 30 second timeout, and a
+conservative request throttle. Callers using a ClashKing proxy typically
+override BaseURL and may enable Realtime.
 
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
@@ -1856,6 +1903,29 @@ NewHTTPClient constructs an HTTPClient from cfg.
 <dl class="api-parameters">
 <dt>Return type:</dt><dd>
 <code>*<a href="#httpclient">HTTPClient</a></code> </dd>
+</dl>
+
+</div>
+
+<a id="newlimiter"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.NewLimiter(<span class="api-param">rps: int</span>, <span class="api-param">maxInFlight: int</span>)<span class="api-return-arrow"> -> </span>(<span class="api-return">*Limiter</span>, <span class="api-return">error</span>)</code></p>
+
+NewLimiter creates a limiter. If maxInFlight is zero or negative, rps is
+used as the in-flight limit.
+
+<dl class="api-parameters">
+<dt>Parameters:</dt><dd>
+<p><strong>rps</strong> (<code>int</code>)</p>
+<p><strong>maxInFlight</strong> (<code>int</code>)</p>
+</dd>
+</dl>
+
+<dl class="api-parameters">
+<dt>Return type:</dt><dd>
+<code>*<a href="#limiter">Limiter</a></code> <code>error</code> </dd>
 </dl>
 
 </div>

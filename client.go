@@ -12,16 +12,16 @@ import (
 
 // Client is the high-level Clash API client.
 //
-// A Client owns its configuration, HTTP transport, and embedded static-data
-// indexes. It is safe to reuse a single client across request handlers as long
-// as callers pass appropriate contexts.
+// A Client owns its configuration and HTTP transport. It is safe to reuse a
+// single client across request handlers as long as callers pass appropriate
+// contexts.
 type Client struct {
-	config     ClientConfig
-	http       *HTTPClient
-	staticData *StaticData
+	config ClientConfig
+	http   *HTTPClient
 }
 
-// NewClient constructs a Client from cfg and loads embedded static data.
+// NewClient constructs a Client from cfg. Embedded static data is parsed lazily
+// when a static-data helper is first used.
 //
 // If cfg.BaseURL is empty, DefaultClientConfig is used. BaseURL and
 // DeveloperBaseURL are normalized by removing trailing slashes.
@@ -31,14 +31,9 @@ func NewClient(cfg ClientConfig) (*Client, error) {
 	if cfg.BaseURL == "" {
 		cfg = DefaultClientConfig()
 	}
-	staticData, err := LoadStaticData()
-	if err != nil {
-		return nil, err
-	}
 	return &Client{
-		config:     cfg,
-		http:       NewHTTPClient(cfg),
-		staticData: staticData,
+		config: cfg,
+		http:   NewHTTPClient(cfg),
 	}, nil
 }
 
@@ -60,24 +55,30 @@ func (c *Client) LoginWithTokens(_ context.Context, tokens ...string) error {
 }
 
 // Close releases client resources.
-//
-// The current implementation does not hold resources that need explicit
-// teardown, so Close returns nil.
-func (c *Client) Close() error { return nil }
+func (c *Client) Close() error {
+	if c != nil && c.http != nil {
+		c.http.CloseIdleConnections()
+	}
+	return nil
+}
 
 // StaticData returns the client's embedded static-data index.
-func (c *Client) StaticData() *StaticData { return c.staticData }
+func (c *Client) StaticData() *StaticData {
+	staticData, _ := LoadStaticData()
+	return staticData
+}
 
 func (c *Client) requestJSON(ctx context.Context, method, path string, body any, out any, opts RequestOptions) (int, error) {
 	fullURL := c.config.BaseURL + path
-	payload, _, retry, err := c.http.Do(ctx, method, fullURL, body, opts)
+	response, err := c.http.Do(ctx, method, fullURL, body, opts)
 	if err != nil {
 		return 0, err
 	}
+	retry := int(response.RetryAfter.Seconds())
 	if out == nil {
 		return retry, nil
 	}
-	if err := json.Unmarshal(payload, out); err != nil {
+	if err := json.Unmarshal(response.Body, out); err != nil {
 		return 0, err
 	}
 	applyResponseMeta(out, retry)
@@ -91,6 +92,31 @@ func (c *Client) fetchItems(ctx context.Context, path string, out any) error {
 
 func (c *Client) defaultRequestOptions() RequestOptions {
 	return RequestOptions{LookupCache: c.config.LookupCache, UpdateCache: c.config.UpdateCache}
+}
+
+// PageOptions contains the optional cursor pagination values used by list
+// endpoints.
+type PageOptions struct {
+	// Limit controls the requested page size.
+	Limit int
+	// Before is the backward pagination cursor.
+	Before string
+	// After is the forward pagination cursor.
+	After string
+}
+
+func (p PageOptions) values() url.Values {
+	values := make(url.Values)
+	if p.Limit != 0 {
+		values.Set("limit", strconv.Itoa(p.Limit))
+	}
+	if p.Before != "" {
+		values.Set("before", p.Before)
+	}
+	if p.After != "" {
+		values.Set("after", p.After)
+	}
+	return values
 }
 
 // SearchClansRequest contains optional filters for SearchClans.
@@ -146,7 +172,7 @@ func (r SearchClansRequest) values() url.Values {
 		values.Set("minClanLevel", strconv.Itoa(r.MinClanLevel))
 	}
 	if len(r.LabelIDs) > 0 {
-		var ids []string
+		ids := make([]string, 0, len(r.LabelIDs))
 		for _, id := range r.LabelIDs {
 			ids = append(ids, strconv.Itoa(id))
 		}
@@ -190,22 +216,12 @@ func (c *Client) GetClan(ctx context.Context, tag string) (*Clan, error) {
 }
 
 // GetMembers fetches a clan member page by clan tag.
-func (c *Client) GetMembers(ctx context.Context, clanTag string, limit int, after, before string) ([]ClanMember, error) {
+func (c *Client) GetMembers(ctx context.Context, clanTag string, page PageOptions) ([]ClanMember, error) {
 	var response struct {
 		Items []ClanMember `json:"items"`
 	}
-	values := make(url.Values)
-	if limit != 0 {
-		values.Set("limit", strconv.Itoa(limit))
-	}
-	if after != "" {
-		values.Set("after", after)
-	}
-	if before != "" {
-		values.Set("before", before)
-	}
 	path := "/clans/" + encodeTag(clanTag) + "/members"
-	if encoded := values.Encode(); encoded != "" {
+	if encoded := page.values().Encode(); encoded != "" {
 		path += "?" + encoded
 	}
 	if err := c.fetchItems(ctx, path, &response); err != nil {
@@ -215,22 +231,12 @@ func (c *Client) GetMembers(ctx context.Context, clanTag string, limit int, afte
 }
 
 // GetWarLog fetches public war log entries for a clan.
-func (c *Client) GetWarLog(ctx context.Context, clanTag string, limit int, after, before string) ([]ClanWarLogEntry, error) {
+func (c *Client) GetWarLog(ctx context.Context, clanTag string, page PageOptions) ([]ClanWarLogEntry, error) {
 	var response struct {
 		Items []ClanWarLogEntry `json:"items"`
 	}
-	values := make(url.Values)
-	if limit != 0 {
-		values.Set("limit", strconv.Itoa(limit))
-	}
-	if after != "" {
-		values.Set("after", after)
-	}
-	if before != "" {
-		values.Set("before", before)
-	}
 	path := "/clans/" + encodeTag(clanTag) + "/warlog"
-	if encoded := values.Encode(); encoded != "" {
+	if encoded := page.values().Encode(); encoded != "" {
 		path += "?" + encoded
 	}
 	if err := c.fetchItems(ctx, path, &response); err != nil {
@@ -240,22 +246,12 @@ func (c *Client) GetWarLog(ctx context.Context, clanTag string, limit int, after
 }
 
 // GetRaidLog fetches Clan Capital raid weekend log entries for a clan.
-func (c *Client) GetRaidLog(ctx context.Context, clanTag string, limit int, after, before string) ([]RaidLogEntry, error) {
+func (c *Client) GetRaidLog(ctx context.Context, clanTag string, page PageOptions) ([]RaidLogEntry, error) {
 	var response struct {
 		Items []RaidLogEntry `json:"items"`
 	}
-	values := make(url.Values)
-	if limit != 0 {
-		values.Set("limit", strconv.Itoa(limit))
-	}
-	if after != "" {
-		values.Set("after", after)
-	}
-	if before != "" {
-		values.Set("before", before)
-	}
 	path := "/clans/" + encodeTag(clanTag) + "/capitalraidseasons"
-	if encoded := values.Encode(); encoded != "" {
+	if encoded := page.values().Encode(); encoded != "" {
 		path += "?" + encoded
 	}
 	if err := c.fetchItems(ctx, path, &response); err != nil {
@@ -324,7 +320,7 @@ func (c *Client) GetCurrentWar(ctx context.Context, clanTag string, round ...War
 
 // GetClanWars fetches the regular current war for each clan tag in order.
 func (c *Client) GetClanWars(ctx context.Context, tags []string) ([]ClanWar, error) {
-	var out []ClanWar
+	out := make([]ClanWar, 0, len(tags))
 	for _, tag := range tags {
 		war, err := c.GetClanWar(ctx, tag)
 		if err != nil {
@@ -373,7 +369,7 @@ func (c *Client) GetLeagueWar(ctx context.Context, clanTag string, round WarRoun
 
 // GetLeagueWars fetches CWL wars by war tag.
 func (c *Client) GetLeagueWars(ctx context.Context, warTags []string) ([]ClanWar, error) {
-	var out []ClanWar
+	out := make([]ClanWar, 0, len(warTags))
 	for _, warTag := range warTags {
 		war, err := c.getLeagueWarByTag(ctx, warTag, nil, "")
 		if err != nil {
@@ -387,7 +383,7 @@ func (c *Client) GetLeagueWars(ctx context.Context, warTags []string) ([]ClanWar
 // GetCurrentWars fetches GetCurrentWar for each clan tag and omits clans with no
 // current war.
 func (c *Client) GetCurrentWars(ctx context.Context, tags []string) ([]ClanWar, error) {
-	var out []ClanWar
+	out := make([]ClanWar, 0, len(tags))
 	for _, tag := range tags {
 		war, err := c.GetCurrentWar(ctx, tag)
 		if err != nil {
@@ -537,22 +533,12 @@ func orientWarForClan(war *ClanWar, clanTag string) bool {
 }
 
 // SearchLocations fetches API locations with optional pagination.
-func (c *Client) SearchLocations(ctx context.Context, limit int, before, after string) ([]Location, error) {
+func (c *Client) SearchLocations(ctx context.Context, page PageOptions) ([]Location, error) {
 	var response struct {
 		Items []Location `json:"items"`
 	}
-	values := make(url.Values)
-	if limit != 0 {
-		values.Set("limit", strconv.Itoa(limit))
-	}
-	if before != "" {
-		values.Set("before", before)
-	}
-	if after != "" {
-		values.Set("after", after)
-	}
 	path := "/locations"
-	if encoded := values.Encode(); encoded != "" {
+	if encoded := page.values().Encode(); encoded != "" {
 		path += "?" + encoded
 	}
 	if err := c.fetchItems(ctx, path, &response); err != nil {
@@ -565,7 +551,10 @@ func (c *Client) SearchLocations(ctx context.Context, limit int, before, after s
 func (c *Client) GetLocation(ctx context.Context, locationID int) (*Location, error) {
 	var out Location
 	_, err := c.requestJSON(ctx, "GET", fmt.Sprintf("/locations/%d", locationID), nil, &out, c.defaultRequestOptions())
-	return &out, err
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // GetLocationNamed returns the first location whose name matches
@@ -573,7 +562,7 @@ func (c *Client) GetLocation(ctx context.Context, locationID int) (*Location, er
 //
 // It returns nil, nil when no matching location is found.
 func (c *Client) GetLocationNamed(ctx context.Context, locationName string) (*Location, error) {
-	locations, err := c.SearchLocations(ctx, 0, "", "")
+	locations, err := c.SearchLocations(ctx, PageOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -585,129 +574,119 @@ func (c *Client) GetLocationNamed(ctx context.Context, locationName string) (*Lo
 	return nil, nil
 }
 
-func (c *Client) getRankingItems(ctx context.Context, path string, limit int, before, after string, out any) error {
-	values := make(url.Values)
-	if limit != 0 {
-		values.Set("limit", strconv.Itoa(limit))
-	}
-	if before != "" {
-		values.Set("before", before)
-	}
-	if after != "" {
-		values.Set("after", after)
-	}
-	if encoded := values.Encode(); encoded != "" {
+func (c *Client) getRankingItems(ctx context.Context, path string, page PageOptions, out any) error {
+	if encoded := page.values().Encode(); encoded != "" {
 		path += "?" + encoded
 	}
 	return c.fetchItems(ctx, path, out)
 }
 
 // GetLocationClans fetches home-village clan rankings for a numeric location ID.
-func (c *Client) GetLocationClans(ctx context.Context, locationID, limit int, before, after string) ([]RankedClan, error) {
-	return c.GetLocationClansByLocationID(ctx, strconv.Itoa(locationID), limit, before, after)
+func (c *Client) GetLocationClans(ctx context.Context, locationID int, page PageOptions) ([]RankedClan, error) {
+	return c.GetLocationClansByLocationID(ctx, strconv.Itoa(locationID), page)
 }
 
 // GetLocationClansByLocationID fetches home-village clan rankings for a
 // location ID string.
-func (c *Client) GetLocationClansByLocationID(ctx context.Context, locationID string, limit int, before, after string) ([]RankedClan, error) {
+func (c *Client) GetLocationClansByLocationID(ctx context.Context, locationID string, page PageOptions) ([]RankedClan, error) {
 	var response struct {
 		Items []RankedClan `json:"items"`
 	}
-	err := c.getRankingItems(ctx, fmt.Sprintf("/locations/%s/rankings/clans", locationID), limit, before, after, &response)
+	err := c.getRankingItems(ctx, fmt.Sprintf("/locations/%s/rankings/clans", locationID), page, &response)
 	return response.Items, err
 }
 
 // GetLocationClansCapital fetches Clan Capital clan rankings for a numeric
 // location ID.
-func (c *Client) GetLocationClansCapital(ctx context.Context, locationID, limit int, before, after string) ([]RankedClan, error) {
-	return c.GetLocationClansCapitalByLocationID(ctx, strconv.Itoa(locationID), limit, before, after)
+func (c *Client) GetLocationClansCapital(ctx context.Context, locationID int, page PageOptions) ([]RankedClan, error) {
+	return c.GetLocationClansCapitalByLocationID(ctx, strconv.Itoa(locationID), page)
 }
 
 // GetLocationClansCapitalByLocationID fetches Clan Capital clan rankings for a
 // location ID string.
-func (c *Client) GetLocationClansCapitalByLocationID(ctx context.Context, locationID string, limit int, before, after string) ([]RankedClan, error) {
+func (c *Client) GetLocationClansCapitalByLocationID(ctx context.Context, locationID string, page PageOptions) ([]RankedClan, error) {
 	var response struct {
 		Items []RankedClan `json:"items"`
 	}
-	err := c.getRankingItems(ctx, fmt.Sprintf("/locations/%s/rankings/capitals", locationID), limit, before, after, &response)
+	err := c.getRankingItems(ctx, fmt.Sprintf("/locations/%s/rankings/capitals", locationID), page, &response)
 	return response.Items, err
 }
 
 // GetLocationPlayers fetches home-village player rankings for a numeric
 // location ID.
-func (c *Client) GetLocationPlayers(ctx context.Context, locationID, limit int, before, after string) ([]RankedPlayer, error) {
-	return c.GetLocationPlayersByLocationID(ctx, strconv.Itoa(locationID), limit, before, after)
+func (c *Client) GetLocationPlayers(ctx context.Context, locationID int, page PageOptions) ([]RankedPlayer, error) {
+	return c.GetLocationPlayersByLocationID(ctx, strconv.Itoa(locationID), page)
 }
 
 // GetLocationPlayersByLocationID fetches home-village player rankings for a
 // location ID string.
-func (c *Client) GetLocationPlayersByLocationID(ctx context.Context, locationID string, limit int, before, after string) ([]RankedPlayer, error) {
+func (c *Client) GetLocationPlayersByLocationID(ctx context.Context, locationID string, page PageOptions) ([]RankedPlayer, error) {
 	var response struct {
 		Items []RankedPlayer `json:"items"`
 	}
-	err := c.getRankingItems(ctx, fmt.Sprintf("/locations/%s/rankings/players", locationID), limit, before, after, &response)
+	err := c.getRankingItems(ctx, fmt.Sprintf("/locations/%s/rankings/players", locationID), page, &response)
 	return response.Items, err
 }
 
 // GetLocationClansBuilderBase fetches Builder Base clan rankings for a numeric
 // location ID.
-func (c *Client) GetLocationClansBuilderBase(ctx context.Context, locationID, limit int, before, after string) ([]RankedClan, error) {
-	return c.GetLocationClansBuilderBaseByLocationID(ctx, strconv.Itoa(locationID), limit, before, after)
+func (c *Client) GetLocationClansBuilderBase(ctx context.Context, locationID int, page PageOptions) ([]RankedClan, error) {
+	return c.GetLocationClansBuilderBaseByLocationID(ctx, strconv.Itoa(locationID), page)
 }
 
 // GetLocationClansBuilderBaseByLocationID fetches Builder Base clan rankings
 // for a location ID string.
-func (c *Client) GetLocationClansBuilderBaseByLocationID(ctx context.Context, locationID string, limit int, before, after string) ([]RankedClan, error) {
+func (c *Client) GetLocationClansBuilderBaseByLocationID(ctx context.Context, locationID string, page PageOptions) ([]RankedClan, error) {
 	var response struct {
 		Items []RankedClan `json:"items"`
 	}
-	err := c.getRankingItems(ctx, fmt.Sprintf("/locations/%s/rankings/clans-builder-base", locationID), limit, before, after, &response)
+	err := c.getRankingItems(ctx, fmt.Sprintf("/locations/%s/rankings/clans-builder-base", locationID), page, &response)
 	return response.Items, err
 }
 
 // GetLocationPlayersBuilderBase fetches Builder Base player rankings for a
 // numeric location ID.
-func (c *Client) GetLocationPlayersBuilderBase(ctx context.Context, locationID, limit int, before, after string) ([]RankedPlayer, error) {
-	return c.GetLocationPlayersBuilderBaseByLocationID(ctx, strconv.Itoa(locationID), limit, before, after)
+func (c *Client) GetLocationPlayersBuilderBase(ctx context.Context, locationID int, page PageOptions) ([]RankedPlayer, error) {
+	return c.GetLocationPlayersBuilderBaseByLocationID(ctx, strconv.Itoa(locationID), page)
 }
 
 // GetLocationPlayersBuilderBaseByLocationID fetches Builder Base player
 // rankings for a location ID string.
-func (c *Client) GetLocationPlayersBuilderBaseByLocationID(ctx context.Context, locationID string, limit int, before, after string) ([]RankedPlayer, error) {
+func (c *Client) GetLocationPlayersBuilderBaseByLocationID(ctx context.Context, locationID string, page PageOptions) ([]RankedPlayer, error) {
 	var response struct {
 		Items []RankedPlayer `json:"items"`
 	}
-	err := c.getRankingItems(ctx, fmt.Sprintf("/locations/%s/rankings/players-builder-base", locationID), limit, before, after, &response)
+	err := c.getRankingItems(ctx, fmt.Sprintf("/locations/%s/rankings/players-builder-base", locationID), page, &response)
 	return response.Items, err
 }
 
-func (c *Client) getLeagueItems(ctx context.Context, endpoint string, limit int, before, after string) ([]League, error) {
+func (c *Client) getLeagueItems(ctx context.Context, endpoint string, page PageOptions) ([]League, error) {
 	var response struct {
 		Items []League `json:"items"`
 	}
-	err := c.getRankingItems(ctx, endpoint, limit, before, after, &response)
+	err := c.getRankingItems(ctx, endpoint, page, &response)
 	return response.Items, err
 }
 
 // SearchLeagues fetches home-village leagues with optional pagination.
-func (c *Client) SearchLeagues(ctx context.Context, limit int, before, after string) ([]League, error) {
-	return c.getLeagueItems(ctx, "/leaguetiers", limit, before, after)
+func (c *Client) SearchLeagues(ctx context.Context, page PageOptions) ([]League, error) {
+	return c.getLeagueItems(ctx, "/leaguetiers", page)
 }
 
 // SearchBuilderBaseLeagues fetches Builder Base leagues with optional
 // pagination.
-func (c *Client) SearchBuilderBaseLeagues(ctx context.Context, limit int, before, after string) ([]League, error) {
-	return c.getLeagueItems(ctx, "/builderbaseleagues", limit, before, after)
+func (c *Client) SearchBuilderBaseLeagues(ctx context.Context, page PageOptions) ([]League, error) {
+	return c.getLeagueItems(ctx, "/builderbaseleagues", page)
 }
 
 // SearchWarLeagues fetches Clan War League tiers with optional pagination.
-func (c *Client) SearchWarLeagues(ctx context.Context, limit int, before, after string) ([]League, error) {
-	return c.getLeagueItems(ctx, "/warleagues", limit, before, after)
+func (c *Client) SearchWarLeagues(ctx context.Context, page PageOptions) ([]League, error) {
+	return c.getLeagueItems(ctx, "/warleagues", page)
 }
 
 // SearchCapitalLeagues fetches Clan Capital leagues with optional pagination.
-func (c *Client) SearchCapitalLeagues(ctx context.Context, limit int, before, after string) ([]League, error) {
-	return c.getLeagueItems(ctx, "/capitalleagues", limit, before, after)
+func (c *Client) SearchCapitalLeagues(ctx context.Context, page PageOptions) ([]League, error) {
+	return c.getLeagueItems(ctx, "/capitalleagues", page)
 }
 
 // GetLeague fetches a home-village league by ID.
@@ -733,7 +712,10 @@ func (c *Client) GetCapitalLeague(ctx context.Context, id int) (*League, error) 
 func (c *Client) getLeague(ctx context.Context, path string) (*League, error) {
 	var out League
 	_, err := c.requestJSON(ctx, "GET", path, nil, &out, c.defaultRequestOptions())
-	return &out, err
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // GetSeasons fetches available season IDs for a league.
@@ -763,25 +745,25 @@ func (c *Client) GetSeasonRankings(ctx context.Context, leagueID int, seasonID s
 	var response struct {
 		Items []RankedPlayer `json:"items"`
 	}
-	err := c.getRankingItems(ctx, fmt.Sprintf("/leagues/%d/seasons/%s", leagueID, url.PathEscape(seasonID)), 0, "", "", &response)
+	err := c.getRankingItems(ctx, fmt.Sprintf("/leagues/%d/seasons/%s", leagueID, url.PathEscape(seasonID)), PageOptions{}, &response)
 	return response.Items, err
 }
 
 // GetClanLabels fetches clan labels with optional pagination.
-func (c *Client) GetClanLabels(ctx context.Context, limit int, before, after string) ([]Label, error) {
+func (c *Client) GetClanLabels(ctx context.Context, page PageOptions) ([]Label, error) {
 	var response struct {
 		Items []Label `json:"items"`
 	}
-	err := c.getRankingItems(ctx, "/labels/clans", limit, before, after, &response)
+	err := c.getRankingItems(ctx, "/labels/clans", page, &response)
 	return response.Items, err
 }
 
 // GetPlayerLabels fetches player labels with optional pagination.
-func (c *Client) GetPlayerLabels(ctx context.Context, limit int, before, after string) ([]Label, error) {
+func (c *Client) GetPlayerLabels(ctx context.Context, page PageOptions) ([]Label, error) {
 	var response struct {
 		Items []Label `json:"items"`
 	}
-	err := c.getRankingItems(ctx, "/labels/players", limit, before, after, &response)
+	err := c.getRankingItems(ctx, "/labels/players", page, &response)
 	return response.Items, err
 }
 
@@ -789,7 +771,10 @@ func (c *Client) GetPlayerLabels(ctx context.Context, limit int, before, after s
 func (c *Client) GetPlayer(ctx context.Context, tag string) (*Player, error) {
 	var out Player
 	_, err := c.requestJSON(ctx, "GET", "/players/"+encodeTag(tag), nil, &out, c.defaultRequestOptions())
-	return &out, err
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // GetBattleLog fetches a player's battle log.
@@ -810,17 +795,20 @@ func (c *Client) GetPlayerLeagueHistory(ctx context.Context, playerTag string) (
 	return response.Items, err
 }
 
-// GetPlayerLeagueGroup fetches a legend league group and scopes it to a player.
-func (c *Client) GetPlayerLeagueGroup(ctx context.Context, playerTag, leagueGroupTag string, leagueSeasonID int) (*LeagueTierGroup, error) {
+// GetPlayerLeagueGroup fetches a ranked group and scopes it to a player.
+func (c *Client) GetPlayerLeagueGroup(ctx context.Context, playerTag, leagueGroupTag, leagueSeasonID string) (*LeagueTierGroup, error) {
 	var group LeagueTierGroup
 	values := make(url.Values)
 	values.Set("playerTag", CorrectTag(playerTag))
-	path := "/leaguegroup/" + encodeTag(leagueGroupTag) + "/" + strconv.Itoa(leagueSeasonID)
+	path := "/leaguegroup/" + encodeTag(leagueGroupTag) + "/" + url.PathEscape(leagueSeasonID)
 	if encoded := values.Encode(); encoded != "" {
 		path += "?" + encoded
 	}
 	_, err := c.requestJSON(ctx, "GET", path, nil, &group, c.defaultRequestOptions())
-	return &group, err
+	if err != nil {
+		return nil, err
+	}
+	return &group, nil
 }
 
 // VerifyPlayerToken verifies an in-game player API token.
@@ -839,21 +827,25 @@ func (c *Client) VerifyPlayerToken(ctx context.Context, playerTag, token string)
 func (c *Client) GetCurrentGoldPassSeason(ctx context.Context) (*GoldPassSeason, error) {
 	var season GoldPassSeason
 	_, err := c.requestJSON(ctx, "GET", "/goldpass/seasons/current", nil, &season, c.defaultRequestOptions())
-	return &season, err
+	if err != nil {
+		return nil, err
+	}
+	return &season, nil
 }
 
 // ParseArmyLink parses a full Clash army link or raw army payload using the
 // client's static data.
-func (c *Client) ParseArmyLink(link string) ArmyRecipe { return ParseArmyRecipe(c.staticData, link) }
+func (c *Client) ParseArmyLink(link string) ArmyRecipe { return ParseArmyRecipe(c.StaticData(), link) }
 
 // ParseAccountData wraps arbitrary account-link data without mutating it.
 func (c *Client) ParseAccountData(data map[string]any) AccountData { return ParseAccountData(data) }
 
 // GetTroop looks up a troop by name, village, and level in embedded static data.
-func (c *Client) GetTroop(name string, isHomeVillage bool, level int) *Troop {
-	if c == nil || c.staticData == nil {
+func (c *Client) GetTroop(name string, isHomeVillage bool, level int) *StaticUnit {
+	if c == nil {
 		return nil
 	}
+	staticData := c.StaticData()
 	if level == 0 {
 		level = 1
 	}
@@ -861,74 +853,74 @@ func (c *Client) GetTroop(name string, isHomeVillage bool, level int) *Troop {
 	if isHomeVillage {
 		village = VillageHome
 	}
-	if item := c.staticData.LookupByName(name, "troops", string(village)); item != nil {
-		troop := buildTroopFromStatic(item, level)
-		troop.Name = firstNonEmpty(troop.Name, name)
-		troop.Village = firstNonEmpty(troop.Village, string(village))
-		return &troop
+	if item := staticData.lookupByName(name, "troops", string(village)); item != nil {
+		unit := buildStaticUnit(item, level)
+		unit.Name = firstNonEmpty(unit.Name, name)
+		unit.Village = firstNonEmpty(unit.Village, string(village))
+		return &unit
 	}
 	return nil
 }
 
 // GetSpell looks up a spell by name and level in embedded static data.
-func (c *Client) GetSpell(name string, level int) *Spell {
-	if c == nil || c.staticData == nil {
+func (c *Client) GetSpell(name string, level int) *StaticUnit {
+	if c == nil {
 		return nil
 	}
-	if item := c.staticData.LookupByName(name, "spells", ""); item != nil {
-		spell := buildSpellFromStatic(item, level)
-		spell.Name = firstNonEmpty(spell.Name, name)
-		return &spell
+	if item := c.StaticData().lookupByName(name, "spells", ""); item != nil {
+		unit := buildStaticUnit(item, level)
+		unit.Name = firstNonEmpty(unit.Name, name)
+		return &unit
 	}
 	return nil
 }
 
 // GetHero looks up a hero by name and level in embedded static data.
-func (c *Client) GetHero(name string, level int) *Hero {
-	if c == nil || c.staticData == nil {
+func (c *Client) GetHero(name string, level int) *StaticUnit {
+	if c == nil {
 		return nil
 	}
-	if item := c.staticData.LookupByName(name, "heroes", ""); item != nil {
-		hero := buildHeroFromStatic(item, level)
-		hero.Name = firstNonEmpty(hero.Name, name)
-		return &hero
+	if item := c.StaticData().lookupByName(name, "heroes", ""); item != nil {
+		unit := buildStaticUnit(item, level)
+		unit.Name = firstNonEmpty(unit.Name, name)
+		return &unit
 	}
 	return nil
 }
 
 // GetPet looks up a pet by name and level in embedded static data.
-func (c *Client) GetPet(name string, level int) *Pet {
-	if c == nil || c.staticData == nil {
+func (c *Client) GetPet(name string, level int) *StaticUnit {
+	if c == nil {
 		return nil
 	}
-	if item := c.staticData.LookupByName(name, "pets", ""); item != nil {
-		pet := buildPetFromStatic(item, level)
-		pet.Name = firstNonEmpty(pet.Name, name)
-		return &pet
+	if item := c.StaticData().lookupByName(name, "pets", ""); item != nil {
+		unit := buildStaticUnit(item, level)
+		unit.Name = firstNonEmpty(unit.Name, name)
+		return &unit
 	}
 	return nil
 }
 
 // GetEquipment looks up hero equipment by name and level in embedded static
 // data.
-func (c *Client) GetEquipment(name string, level int) *Equipment {
-	if c == nil || c.staticData == nil {
+func (c *Client) GetEquipment(name string, level int) *StaticUnit {
+	if c == nil {
 		return nil
 	}
-	if item := c.staticData.LookupByName(name, "equipment", ""); item != nil {
-		equipment := buildEquipmentFromStatic(item, level)
-		equipment.Name = firstNonEmpty(equipment.Name, name)
-		return &equipment
+	if item := c.StaticData().lookupByName(name, "equipment", ""); item != nil {
+		unit := buildStaticUnit(item, level)
+		unit.Name = firstNonEmpty(unit.Name, name)
+		return &unit
 	}
 	return nil
 }
 
 // GetTranslation returns a translation entry by static-data translation ID.
 func (c *Client) GetTranslation(id string) *Translation {
-	if c.staticData == nil || c.staticData.Translations == nil {
+	if c == nil {
 		return nil
 	}
-	languages := c.staticData.Translations[id]
+	languages := c.StaticData().Translation(id)
 	if len(languages) == 0 {
 		return nil
 	}
@@ -938,7 +930,10 @@ func (c *Client) GetTranslation(id string) *Translation {
 // GetExtendedCWLGroupData returns static medal data for a Clan War League tier
 // by name.
 func (c *Client) GetExtendedCWLGroupData(name string) *ExtendedCWLGroup {
-	item := c.staticData.LookupByName(name, "war_leagues", "")
+	if c == nil {
+		return nil
+	}
+	item := c.StaticData().lookupByName(name, "war_leagues", "")
 	if item == nil {
 		return nil
 	}

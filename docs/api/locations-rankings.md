@@ -112,7 +112,7 @@ Season describes one ranked season placement.
 
 <p><code>string</code> <span class="api-json">json: id</span></p>
 
-ID is the season identifier, usually YYYY-MM.
+ID is the season identifier returned by the API.
 
 </div>
 
@@ -327,6 +327,36 @@ RankedPlayer is a player ranking entry.
 ### `Player`
 
 <p><code><a href="../players/#player">Player</a></code></p>
+
+</div>
+
+<div class="api-field" id="rankedplayer-league" markdown="1">
+
+### `League`
+
+<p><code><a href="#league">League</a></code> <span class="api-json">json: league</span></p>
+
+League is the player's ranking league when the endpoint includes it.
+
+</div>
+
+<div class="api-field" id="rankedplayer-attackwins" markdown="1">
+
+### `AttackWins`
+
+<p><code>int</code> <span class="api-json">json: attackWins</span></p>
+
+AttackWins is the player's attack win count in the ranking.
+
+</div>
+
+<div class="api-field" id="rankedplayer-defensewins" markdown="1">
+
+### `DefenseWins`
+
+<p><code>int</code> <span class="api-json">json: defenseWins</span></p>
+
+DefenseWins is the player's defense win count in the ranking.
 
 </div>
 

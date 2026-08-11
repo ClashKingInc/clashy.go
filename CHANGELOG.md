@@ -2,6 +2,17 @@
 
 All notable changes to this module are documented here.
 
+## v0.1.13
+
+- Updated battle log, ranked player, CWL, and league-group models for the latest Clash of Clans API fields, including typed battle types and battle modifiers.
+- Replaced positional list pagination arguments with `PageOptions` and changed `GetPlayerLeagueGroup` to accept string season IDs.
+- Changed `HTTPClient.Do` to return `HTTPResponse`, added transport connection controls, and hardened cache expiry, eviction, response-size, and CIDR handling.
+- Added an exported rolling-window and in-flight `Limiter`, and made `Client.Close` release idle HTTP connections.
+- Fixed developer-site login by reusing the login session cookie for API-key management requests.
+- Separated player units from `StaticUnit` lookup results, made static-data access lazy and mutation-safe, and hardened army-link parsing.
+- Added timestamp JSON marshaling, explicit war-member attack resolution, and CWL master-roster decoding.
+- Updated the static-data generator, pulled the latest embedded data and translations from `main`, and regenerated constants and API documentation.
+
 ## v0.1.4
 
 - Added a daily static asset update workflow that regenerates static data, commits changed assets, increments the patch tag, and publishes a GitHub release.

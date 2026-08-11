@@ -1,16 +1,11 @@
 package clashy
 
 import (
-	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 )
 
 //go:embed static/static_data.json
@@ -22,28 +17,16 @@ var translationsBytes []byte
 // StaticData is the parsed and indexed ClashKing static data embedded in the
 // package.
 type StaticData struct {
-	// Raw preserves static-data sections exactly as parsed from static_data.json.
-	Raw map[string][]map[string]any
-	// ByID indexes static-data entries by their numeric _id value.
-	ByID map[int]map[string]any
-	// ByName indexes static-data entries by normalized name, section, and
-	// village.
-	ByName map[string]map[string]any
-	// Translations maps translation IDs to language-code/value maps.
-	Translations map[string]map[string]string
+	raw          map[string][]map[string]any
+	byID         map[int]map[string]any
+	byName       map[string]map[string]any
+	translations map[string]map[string]string
 }
 
 var (
 	staticOnce sync.Once
 	staticSet  *StaticData
 	staticErr  error
-)
-
-const (
-	staticDataURL    = "https://assets.clashk.ing/static_data.json"
-	translationsURL  = "https://assets.clashk.ing/translations.json"
-	staticDataPath   = "static/static_data.json"
-	translationsPath = "static/translations.json"
 )
 
 // LoadStaticData parses the embedded static-data files once and returns the
@@ -53,68 +36,6 @@ func LoadStaticData() (*StaticData, error) {
 		staticSet, staticErr = parseStaticData(staticDataBytes, translationsBytes)
 	})
 	return staticSet, staticErr
-}
-
-// UpdateStatic downloads the latest ClashKing static-data and translation JSON,
-// writes the embedded source files, and refreshes this client's in-memory
-// StaticData.
-func (c *Client) UpdateStatic(ctx context.Context) error {
-	if err := downloadJSON(ctx, staticDataURL, staticDataPath); err != nil {
-		return err
-	}
-	if err := downloadJSON(ctx, translationsURL, translationsPath); err != nil {
-		return err
-	}
-	staticBytes, err := os.ReadFile(staticDataPath)
-	if err != nil {
-		return err
-	}
-	translationBytes, err := os.ReadFile(translationsPath)
-	if err != nil {
-		return err
-	}
-	updated, err := parseStaticData(staticBytes, translationBytes)
-	if err != nil {
-		return err
-	}
-	staticOnce = sync.Once{}
-	staticOnce.Do(func() {
-		staticSet = updated
-		staticErr = nil
-	})
-	c.staticData = updated
-	return nil
-}
-
-func downloadJSON(ctx context.Context, url, path string) error {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	client := &http.Client{Timeout: 30 * time.Second}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = resp.Body.Close() }()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("download %s: unexpected status %s", url, resp.Status)
-	}
-	body, err := readLimited(resp.Body, 64<<20)
-	if err != nil {
-		return err
-	}
-	var payload any
-	if err := json.Unmarshal(body, &payload); err != nil {
-		return fmt.Errorf("download %s: invalid json: %w", url, err)
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(path, body, 0o644)
 }
 
 func parseStaticData(staticBytes, translationBytes []byte) (*StaticData, error) {
@@ -128,22 +49,22 @@ func parseStaticData(staticBytes, translationBytes []byte) (*StaticData, error) 
 	}
 
 	s := &StaticData{
-		Raw:          raw,
-		ByID:         make(map[int]map[string]any),
-		ByName:       make(map[string]map[string]any),
-		Translations: translations,
+		raw:          raw,
+		byID:         make(map[int]map[string]any),
+		byName:       make(map[string]map[string]any),
+		translations: translations,
 	}
 	for section, items := range raw {
 		for _, item := range items {
 			id, ok := asInt(item["_id"])
 			if ok {
-				s.ByID[id] = item
+				s.byID[id] = item
 			}
 			name, _ := item["name"].(string)
 			village, _ := item["village"].(string)
 			if name != "" {
 				key := staticLookupKey(name, section, village)
-				s.ByName[key] = item
+				s.byName[key] = item
 			}
 		}
 	}
@@ -160,18 +81,107 @@ func staticLookupKey(name, section, village string) string {
 // The lookup is case-insensitive. The section should match a top-level static
 // data section such as "troops", "spells", "heroes", "pets", or "equipment".
 func (s *StaticData) LookupByName(name, section, village string) map[string]any {
-	if s == nil {
-		return nil
-	}
-	return s.ByName[staticLookupKey(name, section, village)]
+	return cloneStaticMap(s.lookupByName(name, section, village))
 }
 
 // LookupByID returns a static-data entry by numeric static ID.
 func (s *StaticData) LookupByID(id int) map[string]any {
+	return cloneStaticMap(s.lookupByID(id))
+}
+
+// Section returns an isolated copy of one top-level static-data section.
+func (s *StaticData) Section(name string) []map[string]any {
 	if s == nil {
 		return nil
 	}
-	return s.ByID[id]
+	items := s.raw[name]
+	out := make([]map[string]any, len(items))
+	for i := range items {
+		out[i] = cloneStaticMap(items[i])
+	}
+	return out
+}
+
+// Sections returns an isolated copy of all top-level static-data sections.
+func (s *StaticData) Sections() map[string][]map[string]any {
+	if s == nil {
+		return nil
+	}
+	out := make(map[string][]map[string]any, len(s.raw))
+	for name := range s.raw {
+		out[name] = s.Section(name)
+	}
+	return out
+}
+
+// Translation returns an isolated language map for one translation ID.
+func (s *StaticData) Translation(id string) map[string]string {
+	if s == nil || len(s.translations[id]) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(s.translations[id]))
+	for language, value := range s.translations[id] {
+		out[language] = value
+	}
+	return out
+}
+
+// Translations returns an isolated copy of all translations.
+func (s *StaticData) Translations() map[string]map[string]string {
+	if s == nil {
+		return nil
+	}
+	out := make(map[string]map[string]string, len(s.translations))
+	for id := range s.translations {
+		out[id] = s.Translation(id)
+	}
+	return out
+}
+
+func (s *StaticData) lookupByName(name, section, village string) map[string]any {
+	if s == nil {
+		return nil
+	}
+	return s.byName[staticLookupKey(name, section, village)]
+}
+
+func (s *StaticData) lookupByID(id int) map[string]any {
+	if s == nil {
+		return nil
+	}
+	return s.byID[id]
+}
+
+func cloneStaticMap(source map[string]any) map[string]any {
+	if source == nil {
+		return nil
+	}
+	out := make(map[string]any, len(source))
+	for key, value := range source {
+		out[key] = cloneStaticValue(value)
+	}
+	return out
+}
+
+func cloneStaticValue(value any) any {
+	switch value := value.(type) {
+	case map[string]any:
+		return cloneStaticMap(value)
+	case []any:
+		out := make([]any, len(value))
+		for i := range value {
+			out[i] = cloneStaticValue(value[i])
+		}
+		return out
+	case []map[string]any:
+		out := make([]map[string]any, len(value))
+		for i := range value {
+			out[i] = cloneStaticMap(value[i])
+		}
+		return out
+	default:
+		return value
+	}
 }
 
 func asInt(v any) (int, bool) {

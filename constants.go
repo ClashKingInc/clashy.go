@@ -10,11 +10,11 @@ var (
 	// SpellBaseID is the base static-data ID offset for spells in army links.
 	SpellBaseID = 26000000
 	// HeroBaseID is the base static-data ID offset for heroes in army links.
-	HeroBaseID = 2000000
+	HeroBaseID = 28000000
 	// PetBaseID is the base static-data ID offset for pets in army links.
-	PetBaseID = 60000000
+	PetBaseID = 73000000
 	// EquipmentBaseID is the base static-data ID offset for hero equipment in army links.
-	EquipmentBaseID = 30000000
+	EquipmentBaseID = 90000000
 	// ElixirTroopOrder lists regular home-village elixir troops in UI order.
 	ElixirTroopOrder = []string{
 		"Barbarian",

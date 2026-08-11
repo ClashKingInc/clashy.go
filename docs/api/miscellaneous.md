@@ -158,6 +158,21 @@ Before reports whether this timestamp occurs before another timestamp.
 
 </div>
 
+<a id="timestamp-marshaljson"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.Timestamp.MarshalJSON()<span class="api-return-arrow"> -> </span>(<span class="api-return">[]byte</span>, <span class="api-return">error</span>)</code></p>
+
+MarshalJSON encodes Timestamp using the Clash API timestamp format.
+
+<dl class="api-parameters">
+<dt>Return type:</dt><dd>
+<code>[]byte</code> <code>error</code> </dd>
+</dl>
+
+</div>
+
 <a id="timestamp-secondsuntil"></a>
 
 <div class="api-function" markdown="1">

@@ -151,6 +151,37 @@ func TestParseArmyRecipeHeroOptionalFields(t *testing.T) {
 	}
 }
 
+func TestParseArmyRecipeHeroLoadoutNamesUseStaticIDBases(t *testing.T) {
+	static, err := clashy.LoadStaticData()
+	if err != nil {
+		t.Fatalf("load static data: %v", err)
+	}
+
+	recipe := clashy.ParseArmyRecipe(static, "h1p9e17_48")
+	if got := len(recipe.HeroesLoadout); got != 1 {
+		t.Fatalf("heroes = %d, want 1", got)
+	}
+	loadout := recipe.HeroesLoadout[0]
+	if got := loadout.Hero.Name; got != "Archer Queen" {
+		t.Fatalf("hero = %q, want Archer Queen", got)
+	}
+	if loadout.Pet == nil {
+		t.Fatalf("pet = nil, want Frosty")
+	}
+	if got := loadout.Pet.Name; got != "Frosty" {
+		t.Fatalf("pet = %q, want Frosty", got)
+	}
+	if got := len(loadout.Equipment); got != 2 {
+		t.Fatalf("equipment = %d, want 2", got)
+	}
+	if got := loadout.Equipment[0].Name; got != "Giant Arrow" {
+		t.Fatalf("equipment[0] = %q, want Giant Arrow", got)
+	}
+	if got := loadout.Equipment[1].Name; got != "Action Figure" {
+		t.Fatalf("equipment[1] = %q, want Action Figure", got)
+	}
+}
+
 func TestClientParseArmyLinkRawShareCode(t *testing.T) {
 	client, err := clashy.NewClient(clashy.DefaultClientConfig())
 	if err != nil {

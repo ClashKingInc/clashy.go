@@ -41,15 +41,15 @@ func main() {
 }
 ```
 
-Tags can be passed with or without `#`. When `CorrectTags` is enabled in the client config, helper methods normalize tags before building API paths.
+Tags can be passed with or without `#`. Client methods always normalize tags before building API paths.
 
 ## Request Shape
 
-List endpoints return slices, while single-resource endpoints return pointers to the response model. Pagination arguments follow the Clash API convention:
+List endpoints return slices, while single-resource endpoints return pointers to the response model. Paginated methods accept `PageOptions`:
 
 - `limit` controls page size when the endpoint supports it.
 - `after` and `before` are cursor strings returned by the API.
-- empty values are omitted from the query string.
+- zero values are omitted from the query string.
 
 ## Errors
 

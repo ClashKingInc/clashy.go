@@ -37,6 +37,9 @@ The package also embeds ClashKing static game data. Static helpers resolve troop
 - [type Badge](<#Badge>)
   - [func \(b Badge\) URL\(\) string](<#Badge.URL>)
 - [type BattleLogEntry](<#BattleLogEntry>)
+- [type BattleModifier](<#BattleModifier>)
+  - [func \(m BattleModifier\) InGameName\(\) string](<#BattleModifier.InGameName>)
+- [type BattleType](<#BattleType>)
 - [type CapitalDistrict](<#CapitalDistrict>)
 - [type ChatLanguage](<#ChatLanguage>)
 - [type Clan](<#Clan>)
@@ -47,6 +50,8 @@ The package also embeds ClashKing static game data. Static helpers resolve troop
 - [type ClanType](<#ClanType>)
 - [type ClanWar](<#ClanWar>)
   - [func \(w \*ClanWar\) Attacks\(\) \[\]WarAttack](<#ClanWar.Attacks>)
+  - [func \(w \*ClanWar\) Member\(tag string\) \*ClanWarMember](<#ClanWar.Member>)
+  - [func \(w \*ClanWar\) ResolveAttack\(attack WarAttack\) \(attacker, defender \*ClanWarMember\)](<#ClanWar.ResolveAttack>)
   - [func \(w \*ClanWar\) Type\(\) string](<#ClanWar.Type>)
 - [type ClanWarLeagueClan](<#ClanWarLeagueClan>)
 - [type ClanWarLeagueGroup](<#ClanWarLeagueGroup>)
@@ -61,75 +66,76 @@ The package also embeds ClashKing static game data. Static helpers resolve troop
   - [func \(c \*Client\) GetBuilderBaseLeague\(ctx context.Context, id int\) \(\*League, error\)](<#Client.GetBuilderBaseLeague>)
   - [func \(c \*Client\) GetCapitalLeague\(ctx context.Context, id int\) \(\*League, error\)](<#Client.GetCapitalLeague>)
   - [func \(c \*Client\) GetClan\(ctx context.Context, tag string\) \(\*Clan, error\)](<#Client.GetClan>)
-  - [func \(c \*Client\) GetClanLabels\(ctx context.Context, limit int, before, after string\) \(\[\]Label, error\)](<#Client.GetClanLabels>)
+  - [func \(c \*Client\) GetClanLabels\(ctx context.Context, page PageOptions\) \(\[\]Label, error\)](<#Client.GetClanLabels>)
   - [func \(c \*Client\) GetClanWar\(ctx context.Context, clanTag string\) \(\*ClanWar, error\)](<#Client.GetClanWar>)
   - [func \(c \*Client\) GetClanWars\(ctx context.Context, tags \[\]string\) \(\[\]ClanWar, error\)](<#Client.GetClanWars>)
   - [func \(c \*Client\) GetCurrentGoldPassSeason\(ctx context.Context\) \(\*GoldPassSeason, error\)](<#Client.GetCurrentGoldPassSeason>)
   - [func \(c \*Client\) GetCurrentWar\(ctx context.Context, clanTag string, round ...WarRound\) \(\*ClanWar, error\)](<#Client.GetCurrentWar>)
   - [func \(c \*Client\) GetCurrentWars\(ctx context.Context, tags \[\]string\) \(\[\]ClanWar, error\)](<#Client.GetCurrentWars>)
-  - [func \(c \*Client\) GetEquipment\(name string, level int\) \*Equipment](<#Client.GetEquipment>)
+  - [func \(c \*Client\) GetEquipment\(name string, level int\) \*StaticUnit](<#Client.GetEquipment>)
   - [func \(c \*Client\) GetExtendedCWLGroupData\(name string\) \*ExtendedCWLGroup](<#Client.GetExtendedCWLGroupData>)
-  - [func \(c \*Client\) GetHero\(name string, level int\) \*Hero](<#Client.GetHero>)
+  - [func \(c \*Client\) GetHero\(name string, level int\) \*StaticUnit](<#Client.GetHero>)
   - [func \(c \*Client\) GetLeague\(ctx context.Context, id int\) \(\*League, error\)](<#Client.GetLeague>)
   - [func \(c \*Client\) GetLeagueGroup\(ctx context.Context, clanTag string\) \(\*ClanWarLeagueGroup, error\)](<#Client.GetLeagueGroup>)
   - [func \(c \*Client\) GetLeagueWar\(ctx context.Context, clanTag string, round WarRound\) \(\*ClanWar, error\)](<#Client.GetLeagueWar>)
   - [func \(c \*Client\) GetLeagueWars\(ctx context.Context, warTags \[\]string\) \(\[\]ClanWar, error\)](<#Client.GetLeagueWars>)
   - [func \(c \*Client\) GetLocation\(ctx context.Context, locationID int\) \(\*Location, error\)](<#Client.GetLocation>)
-  - [func \(c \*Client\) GetLocationClans\(ctx context.Context, locationID, limit int, before, after string\) \(\[\]RankedClan, error\)](<#Client.GetLocationClans>)
-  - [func \(c \*Client\) GetLocationClansBuilderBase\(ctx context.Context, locationID, limit int, before, after string\) \(\[\]RankedClan, error\)](<#Client.GetLocationClansBuilderBase>)
-  - [func \(c \*Client\) GetLocationClansBuilderBaseByLocationID\(ctx context.Context, locationID string, limit int, before, after string\) \(\[\]RankedClan, error\)](<#Client.GetLocationClansBuilderBaseByLocationID>)
-  - [func \(c \*Client\) GetLocationClansByLocationID\(ctx context.Context, locationID string, limit int, before, after string\) \(\[\]RankedClan, error\)](<#Client.GetLocationClansByLocationID>)
-  - [func \(c \*Client\) GetLocationClansCapital\(ctx context.Context, locationID, limit int, before, after string\) \(\[\]RankedClan, error\)](<#Client.GetLocationClansCapital>)
-  - [func \(c \*Client\) GetLocationClansCapitalByLocationID\(ctx context.Context, locationID string, limit int, before, after string\) \(\[\]RankedClan, error\)](<#Client.GetLocationClansCapitalByLocationID>)
+  - [func \(c \*Client\) GetLocationClans\(ctx context.Context, locationID int, page PageOptions\) \(\[\]RankedClan, error\)](<#Client.GetLocationClans>)
+  - [func \(c \*Client\) GetLocationClansBuilderBase\(ctx context.Context, locationID int, page PageOptions\) \(\[\]RankedClan, error\)](<#Client.GetLocationClansBuilderBase>)
+  - [func \(c \*Client\) GetLocationClansBuilderBaseByLocationID\(ctx context.Context, locationID string, page PageOptions\) \(\[\]RankedClan, error\)](<#Client.GetLocationClansBuilderBaseByLocationID>)
+  - [func \(c \*Client\) GetLocationClansByLocationID\(ctx context.Context, locationID string, page PageOptions\) \(\[\]RankedClan, error\)](<#Client.GetLocationClansByLocationID>)
+  - [func \(c \*Client\) GetLocationClansCapital\(ctx context.Context, locationID int, page PageOptions\) \(\[\]RankedClan, error\)](<#Client.GetLocationClansCapital>)
+  - [func \(c \*Client\) GetLocationClansCapitalByLocationID\(ctx context.Context, locationID string, page PageOptions\) \(\[\]RankedClan, error\)](<#Client.GetLocationClansCapitalByLocationID>)
   - [func \(c \*Client\) GetLocationNamed\(ctx context.Context, locationName string\) \(\*Location, error\)](<#Client.GetLocationNamed>)
-  - [func \(c \*Client\) GetLocationPlayers\(ctx context.Context, locationID, limit int, before, after string\) \(\[\]RankedPlayer, error\)](<#Client.GetLocationPlayers>)
-  - [func \(c \*Client\) GetLocationPlayersBuilderBase\(ctx context.Context, locationID, limit int, before, after string\) \(\[\]RankedPlayer, error\)](<#Client.GetLocationPlayersBuilderBase>)
-  - [func \(c \*Client\) GetLocationPlayersBuilderBaseByLocationID\(ctx context.Context, locationID string, limit int, before, after string\) \(\[\]RankedPlayer, error\)](<#Client.GetLocationPlayersBuilderBaseByLocationID>)
-  - [func \(c \*Client\) GetLocationPlayersByLocationID\(ctx context.Context, locationID string, limit int, before, after string\) \(\[\]RankedPlayer, error\)](<#Client.GetLocationPlayersByLocationID>)
-  - [func \(c \*Client\) GetMembers\(ctx context.Context, clanTag string, limit int, after, before string\) \(\[\]ClanMember, error\)](<#Client.GetMembers>)
-  - [func \(c \*Client\) GetPet\(name string, level int\) \*Pet](<#Client.GetPet>)
+  - [func \(c \*Client\) GetLocationPlayers\(ctx context.Context, locationID int, page PageOptions\) \(\[\]RankedPlayer, error\)](<#Client.GetLocationPlayers>)
+  - [func \(c \*Client\) GetLocationPlayersBuilderBase\(ctx context.Context, locationID int, page PageOptions\) \(\[\]RankedPlayer, error\)](<#Client.GetLocationPlayersBuilderBase>)
+  - [func \(c \*Client\) GetLocationPlayersBuilderBaseByLocationID\(ctx context.Context, locationID string, page PageOptions\) \(\[\]RankedPlayer, error\)](<#Client.GetLocationPlayersBuilderBaseByLocationID>)
+  - [func \(c \*Client\) GetLocationPlayersByLocationID\(ctx context.Context, locationID string, page PageOptions\) \(\[\]RankedPlayer, error\)](<#Client.GetLocationPlayersByLocationID>)
+  - [func \(c \*Client\) GetMembers\(ctx context.Context, clanTag string, page PageOptions\) \(\[\]ClanMember, error\)](<#Client.GetMembers>)
+  - [func \(c \*Client\) GetPet\(name string, level int\) \*StaticUnit](<#Client.GetPet>)
   - [func \(c \*Client\) GetPlayer\(ctx context.Context, tag string\) \(\*Player, error\)](<#Client.GetPlayer>)
-  - [func \(c \*Client\) GetPlayerLabels\(ctx context.Context, limit int, before, after string\) \(\[\]Label, error\)](<#Client.GetPlayerLabels>)
-  - [func \(c \*Client\) GetPlayerLeagueGroup\(ctx context.Context, playerTag, leagueGroupTag string, leagueSeasonID int\) \(\*LeagueTierGroup, error\)](<#Client.GetPlayerLeagueGroup>)
+  - [func \(c \*Client\) GetPlayerLabels\(ctx context.Context, page PageOptions\) \(\[\]Label, error\)](<#Client.GetPlayerLabels>)
+  - [func \(c \*Client\) GetPlayerLeagueGroup\(ctx context.Context, playerTag, leagueGroupTag, leagueSeasonID string\) \(\*LeagueTierGroup, error\)](<#Client.GetPlayerLeagueGroup>)
   - [func \(c \*Client\) GetPlayerLeagueHistory\(ctx context.Context, playerTag string\) \(\[\]LeagueHistoryEntry, error\)](<#Client.GetPlayerLeagueHistory>)
-  - [func \(c \*Client\) GetRaidLog\(ctx context.Context, clanTag string, limit int, after, before string\) \(\[\]RaidLogEntry, error\)](<#Client.GetRaidLog>)
+  - [func \(c \*Client\) GetRaidLog\(ctx context.Context, clanTag string, page PageOptions\) \(\[\]RaidLogEntry, error\)](<#Client.GetRaidLog>)
   - [func \(c \*Client\) GetSeasonRankings\(ctx context.Context, leagueID int, seasonID string\) \(\[\]RankedPlayer, error\)](<#Client.GetSeasonRankings>)
   - [func \(c \*Client\) GetSeasons\(ctx context.Context, leagueID int\) \(\[\]string, error\)](<#Client.GetSeasons>)
-  - [func \(c \*Client\) GetSpell\(name string, level int\) \*Spell](<#Client.GetSpell>)
+  - [func \(c \*Client\) GetSpell\(name string, level int\) \*StaticUnit](<#Client.GetSpell>)
   - [func \(c \*Client\) GetTranslation\(id string\) \*Translation](<#Client.GetTranslation>)
-  - [func \(c \*Client\) GetTroop\(name string, isHomeVillage bool, level int\) \*Troop](<#Client.GetTroop>)
+  - [func \(c \*Client\) GetTroop\(name string, isHomeVillage bool, level int\) \*StaticUnit](<#Client.GetTroop>)
   - [func \(c \*Client\) GetWarLeague\(ctx context.Context, id int\) \(\*League, error\)](<#Client.GetWarLeague>)
-  - [func \(c \*Client\) GetWarLog\(ctx context.Context, clanTag string, limit int, after, before string\) \(\[\]ClanWarLogEntry, error\)](<#Client.GetWarLog>)
+  - [func \(c \*Client\) GetWarLog\(ctx context.Context, clanTag string, page PageOptions\) \(\[\]ClanWarLogEntry, error\)](<#Client.GetWarLog>)
   - [func \(c \*Client\) Login\(ctx context.Context, email, password string\) error](<#Client.Login>)
   - [func \(c \*Client\) LoginWithTokens\(\_ context.Context, tokens ...string\) error](<#Client.LoginWithTokens>)
   - [func \(c \*Client\) ParseAccountData\(data map\[string\]any\) AccountData](<#Client.ParseAccountData>)
   - [func \(c \*Client\) ParseArmyLink\(link string\) ArmyRecipe](<#Client.ParseArmyLink>)
-  - [func \(c \*Client\) SearchBuilderBaseLeagues\(ctx context.Context, limit int, before, after string\) \(\[\]League, error\)](<#Client.SearchBuilderBaseLeagues>)
-  - [func \(c \*Client\) SearchCapitalLeagues\(ctx context.Context, limit int, before, after string\) \(\[\]League, error\)](<#Client.SearchCapitalLeagues>)
+  - [func \(c \*Client\) SearchBuilderBaseLeagues\(ctx context.Context, page PageOptions\) \(\[\]League, error\)](<#Client.SearchBuilderBaseLeagues>)
+  - [func \(c \*Client\) SearchCapitalLeagues\(ctx context.Context, page PageOptions\) \(\[\]League, error\)](<#Client.SearchCapitalLeagues>)
   - [func \(c \*Client\) SearchClans\(ctx context.Context, req SearchClansRequest\) \(\[\]Clan, error\)](<#Client.SearchClans>)
-  - [func \(c \*Client\) SearchLeagues\(ctx context.Context, limit int, before, after string\) \(\[\]League, error\)](<#Client.SearchLeagues>)
-  - [func \(c \*Client\) SearchLocations\(ctx context.Context, limit int, before, after string\) \(\[\]Location, error\)](<#Client.SearchLocations>)
-  - [func \(c \*Client\) SearchWarLeagues\(ctx context.Context, limit int, before, after string\) \(\[\]League, error\)](<#Client.SearchWarLeagues>)
+  - [func \(c \*Client\) SearchLeagues\(ctx context.Context, page PageOptions\) \(\[\]League, error\)](<#Client.SearchLeagues>)
+  - [func \(c \*Client\) SearchLocations\(ctx context.Context, page PageOptions\) \(\[\]Location, error\)](<#Client.SearchLocations>)
+  - [func \(c \*Client\) SearchWarLeagues\(ctx context.Context, page PageOptions\) \(\[\]League, error\)](<#Client.SearchWarLeagues>)
   - [func \(c \*Client\) StaticData\(\) \*StaticData](<#Client.StaticData>)
-  - [func \(c \*Client\) UpdateStatic\(ctx context.Context\) error](<#Client.UpdateStatic>)
   - [func \(c \*Client\) VerifyPlayerToken\(ctx context.Context, playerTag, token string\) \(bool, error\)](<#Client.VerifyPlayerToken>)
 - [type ClientConfig](<#ClientConfig>)
   - [func DefaultClientConfig\(\) ClientConfig](<#DefaultClientConfig>)
 - [type Equipment](<#Equipment>)
-  - [func \(e Equipment\) Static\(c \*Client\) \*Equipment](<#Equipment.Static>)
+  - [func \(e Equipment\) Static\(c \*Client\) \*StaticUnit](<#Equipment.Static>)
 - [type ExtendedCWLGroup](<#ExtendedCWLGroup>)
 - [type Forbidden](<#Forbidden>)
 - [type GatewayError](<#GatewayError>)
 - [type GoldPassSeason](<#GoldPassSeason>)
 - [type HTTPClient](<#HTTPClient>)
   - [func NewHTTPClient\(cfg ClientConfig\) \*HTTPClient](<#NewHTTPClient>)
-  - [func \(h \*HTTPClient\) Do\(ctx context.Context, method, fullURL string, body any, options RequestOptions\) \(\[\]byte, int, int, error\)](<#HTTPClient.Do>)
+  - [func \(h \*HTTPClient\) CloseIdleConnections\(\)](<#HTTPClient.CloseIdleConnections>)
+  - [func \(h \*HTTPClient\) Do\(ctx context.Context, method, fullURL string, body any, options RequestOptions\) \(HTTPResponse, error\)](<#HTTPClient.Do>)
   - [func \(h \*HTTPClient\) LoginDeveloper\(ctx context.Context, email, password string\) error](<#HTTPClient.LoginDeveloper>)
   - [func \(h \*HTTPClient\) SetTokens\(tokens ...string\)](<#HTTPClient.SetTokens>)
 - [type HTTPException](<#HTTPException>)
   - [func \(e \*HTTPException\) Error\(\) string](<#HTTPException.Error>)
+- [type HTTPResponse](<#HTTPResponse>)
 - [type Hero](<#Hero>)
-  - [func \(h Hero\) Static\(c \*Client\) \*Hero](<#Hero.Static>)
+  - [func \(h Hero\) Static\(c \*Client\) \*StaticUnit](<#Hero.Static>)
 - [type HeroLoadout](<#HeroLoadout>)
 - [type Icon](<#Icon>)
 - [type InvalidArgument](<#InvalidArgument>)
@@ -141,13 +147,15 @@ The package also embeds ClashKing static game data. Static helpers resolve troop
 - [type LeagueTierGroupBattleLogEntry](<#LeagueTierGroupBattleLogEntry>)
 - [type LeagueTierGroupMember](<#LeagueTierGroupMember>)
 - [type LegendStatistics](<#LegendStatistics>)
-- [type LoadGameData](<#LoadGameData>)
-  - [func DefaultLoadGameData\(\) LoadGameData](<#DefaultLoadGameData>)
+- [type Limiter](<#Limiter>)
+  - [func NewLimiter\(rps, maxInFlight int\) \(\*Limiter, error\)](<#NewLimiter>)
+  - [func \(l \*Limiter\) Acquire\(ctx context.Context\) \(func\(\), error\)](<#Limiter.Acquire>)
 - [type Location](<#Location>)
 - [type Maintenance](<#Maintenance>)
 - [type NotFound](<#NotFound>)
+- [type PageOptions](<#PageOptions>)
 - [type Pet](<#Pet>)
-  - [func \(p Pet\) Static\(c \*Client\) \*Pet](<#Pet.Static>)
+  - [func \(p Pet\) Static\(c \*Client\) \*StaticUnit](<#Pet.Static>)
 - [type Player](<#Player>)
   - [func \(p \*Player\) BuilderTroops\(\) \[\]Troop](<#Player.BuilderTroops>)
   - [func \(p \*Player\) GetAchievement\(name string\) \*Achievement](<#Player.GetAchievement>)
@@ -178,17 +186,22 @@ The package also embeds ClashKing static game data. Static helpers resolve troop
   - [func GetSeason\(timestamp time.Time, forward bool\) SeasonWindow](<#GetSeason>)
   - [func GetSeasonByID\(seasonID string\) \(SeasonWindow, error\)](<#GetSeasonByID>)
 - [type Spell](<#Spell>)
-  - [func \(s Spell\) Static\(c \*Client\) \*Spell](<#Spell.Static>)
+  - [func \(s Spell\) Static\(c \*Client\) \*StaticUnit](<#Spell.Static>)
 - [type SpellCount](<#SpellCount>)
 - [type StaticData](<#StaticData>)
   - [func LoadStaticData\(\) \(\*StaticData, error\)](<#LoadStaticData>)
   - [func \(s \*StaticData\) LookupByID\(id int\) map\[string\]any](<#StaticData.LookupByID>)
   - [func \(s \*StaticData\) LookupByName\(name, section, village string\) map\[string\]any](<#StaticData.LookupByName>)
+  - [func \(s \*StaticData\) Section\(name string\) \[\]map\[string\]any](<#StaticData.Section>)
+  - [func \(s \*StaticData\) Sections\(\) map\[string\]\[\]map\[string\]any](<#StaticData.Sections>)
+  - [func \(s \*StaticData\) Translation\(id string\) map\[string\]string](<#StaticData.Translation>)
+  - [func \(s \*StaticData\) Translations\(\) map\[string\]map\[string\]string](<#StaticData.Translations>)
 - [type StaticUnit](<#StaticUnit>)
 - [type TimeDelta](<#TimeDelta>)
 - [type Timestamp](<#Timestamp>)
   - [func \(t Timestamp\) After\(other Timestamp\) bool](<#Timestamp.After>)
   - [func \(t Timestamp\) Before\(other Timestamp\) bool](<#Timestamp.Before>)
+  - [func \(t Timestamp\) MarshalJSON\(\) \(\[\]byte, error\)](<#Timestamp.MarshalJSON>)
   - [func \(t Timestamp\) SecondsUntil\(\) int](<#Timestamp.SecondsUntil>)
   - [func \(t \*Timestamp\) UnmarshalJSON\(data \[\]byte\) error](<#Timestamp.UnmarshalJSON>)
 - [type Translation](<#Translation>)
@@ -197,7 +210,7 @@ The package also embeds ClashKing static game data. Static helpers resolve troop
   - [func \(t Troop\) IsBuilderBase\(\) bool](<#Troop.IsBuilderBase>)
   - [func \(t Troop\) IsHomeBase\(\) bool](<#Troop.IsHomeBase>)
   - [func \(t Troop\) IsSuperTroop\(\) bool](<#Troop.IsSuperTroop>)
-  - [func \(t Troop\) Static\(c \*Client\) \*Troop](<#Troop.Static>)
+  - [func \(t Troop\) Static\(c \*Client\) \*StaticUnit](<#Troop.Static>)
 - [type TroopCount](<#TroopCount>)
 - [type VillageType](<#VillageType>)
 - [type WarAttack](<#WarAttack>)
@@ -218,11 +231,11 @@ var (
     // SpellBaseID is the base static-data ID offset for spells in army links.
     SpellBaseID = 26000000
     // HeroBaseID is the base static-data ID offset for heroes in army links.
-    HeroBaseID = 2000000
+    HeroBaseID = 28000000
     // PetBaseID is the base static-data ID offset for pets in army links.
-    PetBaseID = 60000000
+    PetBaseID = 73000000
     // EquipmentBaseID is the base static-data ID offset for hero equipment in army links.
-    EquipmentBaseID = 30000000
+    EquipmentBaseID = 90000000
     // ElixirTroopOrder lists regular home-village elixir troops in UI order.
     ElixirTroopOrder = []string{
         "Barbarian",
@@ -257,6 +270,7 @@ var (
         "Ice Golem",
         "Headhunter",
         "Apprentice Warden",
+        "Ruin Witch",
         "Druid",
         "Furnace",
     }
@@ -322,8 +336,6 @@ var (
         "Snake Barrel",
         "Giant Giant",
         "K.A.N.E",
-        "The Disarmer",
-        "YEETer",
         "YEETer",
         "The Disarmer",
         "Meteor Golem",
@@ -365,6 +377,7 @@ var (
         "Bat Spell",
         "Overgrowth Spell",
         "Ice Block Spell",
+        "Angry Spell",
     }
     // SeasonalSpellOrder lists temporary seasonal spells in static-data order.
     SeasonalSpellOrder = []string{
@@ -422,6 +435,7 @@ var (
         "Rocket Spear",
         "Spiky Ball",
         "Frozen Arrow",
+        "Monolith Arrow",
         "Giant Arrow",
         "Heroic Torch",
         "Healer Puppet",
@@ -559,8 +573,14 @@ var (
 )
 ```
 
+<a name="ErrInvalidLimit"></a>ErrInvalidLimit is returned when a limiter is created or used without a positive requests\-per\-second limit.
+
+```go
+var ErrInvalidLimit = errors.New("clashy: requests per second must be greater than zero")
+```
+
 <a name="CorrectTag"></a>
-## func [CorrectTag](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L34>)
+## func [CorrectTag](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L36>)
 
 ```go
 func CorrectTag(tag string) string
@@ -598,7 +618,7 @@ func main() {
 </details>
 
 <a name="FromTimestamp"></a>
-## func [FromTimestamp](<https://github.com/ClashKingInc/clashy.go/blob/main/response.go#L49>)
+## func [FromTimestamp](<https://github.com/ClashKingInc/clashy.go/blob/main/response.go#L55>)
 
 ```go
 func FromTimestamp(raw string) (time.Time, error)
@@ -607,7 +627,7 @@ func FromTimestamp(raw string) (time.Time, error)
 FromTimestamp parses a Clash API timestamp in 20060102T150405.000Z format.
 
 <a name="GenLegendDate"></a>
-## func [GenLegendDate](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L122>)
+## func [GenLegendDate](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L160>)
 
 ```go
 func GenLegendDate(timestamp time.Time) string
@@ -618,7 +638,7 @@ GenLegendDate returns the legend\-league day identifier for timestamp.
 Legend days roll over at 05:00 UTC, so timestamps before that hour map to the previous calendar date.
 
 <a name="GenSeasonDate"></a>
-## func [GenSeasonDate](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L114>)
+## func [GenSeasonDate](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L152>)
 
 ```go
 func GenSeasonDate(timestamp time.Time) string
@@ -627,7 +647,7 @@ func GenSeasonDate(timestamp time.Time) string
 GenSeasonDate returns the trophy season identifier for timestamp.
 
 <a name="GetClanGamesEnd"></a>
-## func [GetClanGamesEnd](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L243>)
+## func [GetClanGamesEnd](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L281>)
 
 ```go
 func GetClanGamesEnd(timestamp time.Time) time.Time
@@ -636,7 +656,7 @@ func GetClanGamesEnd(timestamp time.Time) time.Time
 GetClanGamesEnd returns the Clan Games end time for the month containing timestamp, rolling forward after that month's Clan Games end.
 
 <a name="GetClanGamesStart"></a>
-## func [GetClanGamesStart](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L225>)
+## func [GetClanGamesStart](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L263>)
 
 ```go
 func GetClanGamesStart(timestamp time.Time) time.Time
@@ -645,7 +665,7 @@ func GetClanGamesStart(timestamp time.Time) time.Time
 GetClanGamesStart returns the Clan Games start time for the month containing timestamp, rolling forward after that month's Clan Games end.
 
 <a name="GetRaidWeekendEnd"></a>
-## func [GetRaidWeekendEnd](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L267>)
+## func [GetRaidWeekendEnd](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L305>)
 
 ```go
 func GetRaidWeekendEnd(timestamp time.Time) time.Time
@@ -654,7 +674,7 @@ func GetRaidWeekendEnd(timestamp time.Time) time.Time
 GetRaidWeekendEnd returns the end time for the raid weekend containing timestamp.
 
 <a name="GetRaidWeekendStart"></a>
-## func [GetRaidWeekendStart](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L261>)
+## func [GetRaidWeekendStart](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L299>)
 
 ```go
 func GetRaidWeekendStart(timestamp time.Time) time.Time
@@ -663,7 +683,7 @@ func GetRaidWeekendStart(timestamp time.Time) time.Time
 GetRaidWeekendStart returns the start time for the raid weekend containing timestamp.
 
 <a name="GetSeasonEnd"></a>
-## func [GetSeasonEnd](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L137>)
+## func [GetSeasonEnd](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L175>)
 
 ```go
 func GetSeasonEnd(timestamp time.Time) time.Time
@@ -672,7 +692,7 @@ func GetSeasonEnd(timestamp time.Time) time.Time
 GetSeasonEnd returns the end time of the trophy season containing timestamp.
 
 <a name="GetSeasonID"></a>
-## func [GetSeasonID](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L109>)
+## func [GetSeasonID](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L147>)
 
 ```go
 func GetSeasonID() string
@@ -681,7 +701,7 @@ func GetSeasonID() string
 GetSeasonID returns the current trophy season identifier in YYYY\-MM form.
 
 <a name="GetSeasonStart"></a>
-## func [GetSeasonStart](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L132>)
+## func [GetSeasonStart](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L170>)
 
 ```go
 func GetSeasonStart(timestamp time.Time) time.Time
@@ -701,7 +721,7 @@ WithoutRateLimit returns a child context that bypasses the client's request limi
 Use this for trusted internal calls where the caller is already controlling concurrency. It does not disable token rotation, caching, deadlines, or HTTP transport behavior.
 
 <a name="AccountData"></a>
-## type [AccountData](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L427-L430>)
+## type [AccountData](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L447-L450>)
 
 AccountData is a thin wrapper around arbitrary account\-link data.
 
@@ -713,7 +733,7 @@ type AccountData struct {
 ```
 
 <a name="ParseAccountData"></a>
-### func [ParseAccountData](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L433>)
+### func [ParseAccountData](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L453>)
 
 ```go
 func ParseAccountData(data map[string]any) AccountData
@@ -722,7 +742,7 @@ func ParseAccountData(data map[string]any) AccountData
 ParseAccountData wraps account\-link data without mutating it.
 
 <a name="Achievement"></a>
-## type [Achievement](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L84-L99>)
+## type [Achievement](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L98-L113>)
 
 Achievement describes one player achievement and its current progress.
 
@@ -746,7 +766,7 @@ type Achievement struct {
 ```
 
 <a name="ArmyRecipe"></a>
-## type [ArmyRecipe](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L246-L259>)
+## type [ArmyRecipe](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L243-L256>)
 
 ArmyRecipe is the normalized representation of a Clash army link.
 
@@ -768,7 +788,7 @@ type ArmyRecipe struct {
 ```
 
 <a name="ParseArmyRecipe"></a>
-### func [ParseArmyRecipe](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L279>)
+### func [ParseArmyRecipe](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L276>)
 
 ```go
 func ParseArmyRecipe(static *StaticData, link string) ArmyRecipe
@@ -815,7 +835,7 @@ func main() {
 </details>
 
 <a name="Badge"></a>
-## type [Badge](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L53-L60>)
+## type [Badge](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L67-L74>)
 
 Badge contains the common small, medium, and large image URLs for clan badges.
 
@@ -831,7 +851,7 @@ type Badge struct {
 ```
 
 <a name="Badge.URL"></a>
-### func \(Badge\) [URL](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L63>)
+### func \(Badge\) [URL](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L77>)
 
 ```go
 func (b Badge) URL() string
@@ -840,14 +860,14 @@ func (b Badge) URL() string
 URL returns the preferred badge URL, choosing medium, then large, then small.
 
 <a name="BattleLogEntry"></a>
-## type [BattleLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L12-L33>)
+## type [BattleLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L12-L41>)
 
 BattleLogEntry is one player battle log entry.
 
 ```go
 type BattleLogEntry struct {
     // BattleType describes the game mode for the battle.
-    BattleType string `json:"battleType,omitempty"`
+    BattleType BattleType `json:"battleType,omitempty"`
     // Attack reports whether the entry is an attack made by the requested
     // player. False entries are defenses.
     Attack bool `json:"attack,omitempty"`
@@ -855,6 +875,10 @@ type BattleLogEntry struct {
     ArmyShareCode string `json:"armyShareCode,omitempty"`
     // OpponentPlayerTag is the opponent's player tag.
     OpponentPlayerTag string `json:"opponentPlayerTag,omitempty"`
+    // OpponentName is the opponent's display name.
+    OpponentName string `json:"opponentName,omitempty"`
+    // OpponentTownHallLevel is the opponent's Town Hall level.
+    OpponentTownHallLevel int `json:"opponentTownHallLevel,omitempty"`
     // Stars is the number of stars earned by the attacker.
     Stars int `json:"stars,omitempty"`
     // DestructionPercentage is the destruction percentage earned by the attacker.
@@ -865,12 +889,73 @@ type BattleLogEntry struct {
     ExtraLootedResources []Resource `json:"extraLootedResources,omitempty"`
     // AvailableLoot contains resources that were available before the battle.
     AvailableLoot []Resource `json:"availableLoot,omitempty"`
+    // Duration is the battle duration in seconds.
+    Duration int `json:"battleTime,omitempty"`
+    // Timestamp is the API timestamp for when the battle happened.
+    Timestamp string `json:"battleTimestamp,omitempty"`
     // contains filtered or unexported fields
 }
 ```
 
+<a name="BattleModifier"></a>
+## type [BattleModifier](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L71>)
+
+BattleModifier describes the modifier applied to a war battle.
+
+```go
+type BattleModifier string
+```
+
+<a name="BattleModifierNone"></a>
+
+```go
+const (
+    // BattleModifierNone means the war has no battle modifier.
+    BattleModifierNone BattleModifier = "none"
+    // BattleModifierHardMode is the esports hard mode modifier.
+    BattleModifierHardMode BattleModifier = "hardMode"
+    // BattleModifierMinusOne is the Legend I battle modifier.
+    BattleModifierMinusOne BattleModifier = "minusOne"
+    // BattleModifierMinusTwo is the Legend II battle modifier.
+    BattleModifierMinusTwo BattleModifier = "minusTwo"
+    // BattleModifierMinusThree is the Legend III battle modifier.
+    BattleModifierMinusThree BattleModifier = "minusThree"
+)
+```
+
+<a name="BattleModifier.InGameName"></a>
+### func \(BattleModifier\) [InGameName](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L87>)
+
+```go
+func (m BattleModifier) InGameName() string
+```
+
+InGameName returns a client\-facing display name for the battle modifier.
+
+<a name="BattleType"></a>
+## type [BattleType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L59>)
+
+BattleType describes the game mode for a player battle log entry.
+
+```go
+type BattleType string
+```
+
+<a name="BattleTypeHomeVillage"></a>
+
+```go
+const (
+    // BattleTypeHomeVillage is a home-village battle log entry.
+    BattleTypeHomeVillage BattleType = "HOME_VILLAGE"
+    // BattleTypeRanked is a ranked battle log entry.
+    BattleTypeRanked BattleType = "RANKED"
+    // BattleTypeLegend is a Legend League battle log entry.
+    BattleTypeLegend BattleType = "LEGEND"
+)
+```
+
 <a name="CapitalDistrict"></a>
-## type [CapitalDistrict](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L163-L176>)
+## type [CapitalDistrict](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L177-L190>)
 
 CapitalDistrict describes a clan capital district from clan and raid data.
 
@@ -892,7 +977,7 @@ type CapitalDistrict struct {
 ```
 
 <a name="ChatLanguage"></a>
-## type [ChatLanguage](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L179-L186>)
+## type [ChatLanguage](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L193-L200>)
 
 ChatLanguage describes the preferred language configured for a clan.
 
@@ -1051,7 +1136,7 @@ type ClanMember struct {
 ```
 
 <a name="ClanType"></a>
-## type [ClanType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L59>)
+## type [ClanType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L105>)
 
 ClanType describes a clan's join policy.
 
@@ -1073,7 +1158,7 @@ const (
 ```
 
 <a name="ClanWar"></a>
-## type [ClanWar](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L70-L95>)
+## type [ClanWar](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L64-L89>)
 
 ClanWar is the current, historical, or league war response.
 
@@ -1097,7 +1182,7 @@ type ClanWar struct {
     Opponent *WarClan `json:"opponent,omitempty"`
     // BattleModifier describes event-specific modifiers when the API includes
     // one.
-    BattleModifier string `json:"battleModifier,omitempty"`
+    BattleModifier BattleModifier `json:"battleModifier,omitempty"`
     // WarTag is the CWL war tag. It is empty for normal classic wars.
     WarTag string `json:"tag,omitempty"`
     // ClanTag is the requested clan tag associated with this response.
@@ -1109,7 +1194,7 @@ type ClanWar struct {
 ```
 
 <a name="ClanWar.Attacks"></a>
-### func \(\*ClanWar\) [Attacks](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L106>)
+### func \(\*ClanWar\) [Attacks](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L100>)
 
 ```go
 func (w *ClanWar) Attacks() []WarAttack
@@ -1117,8 +1202,26 @@ func (w *ClanWar) Attacks() []WarAttack
 
 Attacks returns all attacks made by both sides of the war.
 
+<a name="ClanWar.Member"></a>
+### func \(\*ClanWar\) [Member](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L132>)
+
+```go
+func (w *ClanWar) Member(tag string) *ClanWarMember
+```
+
+Member returns the war member with tag from either side of the war.
+
+<a name="ClanWar.ResolveAttack"></a>
+### func \(\*ClanWar\) [ResolveAttack](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L151>)
+
+```go
+func (w *ClanWar) ResolveAttack(attack WarAttack) (attacker, defender *ClanWarMember)
+```
+
+ResolveAttack resolves an attack's tags to the matching war members.
+
 <a name="ClanWar.Type"></a>
-### func \(\*ClanWar\) [Type](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L98>)
+### func \(\*ClanWar\) [Type](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L92>)
 
 ```go
 func (w *ClanWar) Type() string
@@ -1127,7 +1230,7 @@ func (w *ClanWar) Type() string
 Type returns "cwl" when the war has a CWL war tag and "random" otherwise.
 
 <a name="ClanWarLeagueClan"></a>
-## type [ClanWarLeagueClan](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L144-L153>)
+## type [ClanWarLeagueClan](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L174-L183>)
 
 ClanWarLeagueClan is a clan entry inside a CWL group.
 
@@ -1145,7 +1248,7 @@ type ClanWarLeagueClan struct {
 ```
 
 <a name="ClanWarLeagueGroup"></a>
-## type [ClanWarLeagueGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L156-L169>)
+## type [ClanWarLeagueGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L186-L199>)
 
 ClanWarLeagueGroup is the current CWL group for a clan.
 
@@ -1153,7 +1256,7 @@ ClanWarLeagueGroup is the current CWL group for a clan.
 type ClanWarLeagueGroup struct {
     // State is the group state returned by the API.
     State string `json:"state,omitempty"`
-    // Season is the CWL season identifier.
+    // Season is the CWL season identifier returned by the API.
     Season string `json:"season,omitempty"`
     // Clans contains the clans participating in the group.
     Clans []ClanWarLeagueClan `json:"clans,omitempty"`
@@ -1167,7 +1270,7 @@ type ClanWarLeagueGroup struct {
 ```
 
 <a name="ClanWarLogEntry"></a>
-## type [ClanWarLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L129-L141>)
+## type [ClanWarLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L156-L171>)
 
 ClanWarLogEntry is one item from a clan's public war log.
 
@@ -1183,12 +1286,15 @@ type ClanWarLogEntry struct {
     Clan *WarClan `json:"clan,omitempty"`
     // Opponent is the opposing clan side.
     Opponent *WarClan `json:"opponent,omitempty"`
+    // BattleModifier describes event-specific modifiers when the API includes
+    // one.
+    BattleModifier BattleModifier `json:"battleModifier,omitempty"`
     // contains filtered or unexported fields
 }
 ```
 
 <a name="ClanWarMember"></a>
-## type [ClanWarMember](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L26-L41>)
+## type [ClanWarMember](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L20-L35>)
 
 ClanWarMember is a player entry on one side of a war.
 
@@ -1233,11 +1339,11 @@ func (e *ClashOfClansException) Error() string
 Error implements the error interface.
 
 <a name="Client"></a>
-## type [Client](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L18-L22>)
+## type [Client](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L18-L21>)
 
 Client is the high\-level Clash API client.
 
-A Client owns its configuration, HTTP transport, and embedded static\-data indexes. It is safe to reuse a single client across request handlers as long as callers pass appropriate contexts.
+A Client owns its configuration and HTTP transport. It is safe to reuse a single client across request handlers as long as callers pass appropriate contexts.
 
 ```go
 type Client struct {
@@ -1252,7 +1358,7 @@ type Client struct {
 func NewClient(cfg ClientConfig) (*Client, error)
 ```
 
-NewClient constructs a Client from cfg and loads embedded static data.
+NewClient constructs a Client from cfg. Embedded static data is parsed lazily when a static\-data helper is first used.
 
 If cfg.BaseURL is empty, DefaultClientConfig is used. BaseURL and DeveloperBaseURL are normalized by removing trailing slashes.
 
@@ -1290,7 +1396,7 @@ func main() {
 </details>
 
 <a name="Client.Close"></a>
-### func \(\*Client\) [Close](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L66>)
+### func \(\*Client\) [Close](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L58>)
 
 ```go
 func (c *Client) Close() error
@@ -1298,10 +1404,8 @@ func (c *Client) Close() error
 
 Close releases client resources.
 
-The current implementation does not hold resources that need explicit teardown, so Close returns nil.
-
 <a name="Client.GetBattleLog"></a>
-### func \(\*Client\) [GetBattleLog](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L796>)
+### func \(\*Client\) [GetBattleLog](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L781>)
 
 ```go
 func (c *Client) GetBattleLog(ctx context.Context, playerTag string) ([]BattleLogEntry, error)
@@ -1310,7 +1414,7 @@ func (c *Client) GetBattleLog(ctx context.Context, playerTag string) ([]BattleLo
 GetBattleLog fetches a player's battle log.
 
 <a name="Client.GetBuilderBaseLeague"></a>
-### func \(\*Client\) [GetBuilderBaseLeague](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L719>)
+### func \(\*Client\) [GetBuilderBaseLeague](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L698>)
 
 ```go
 func (c *Client) GetBuilderBaseLeague(ctx context.Context, id int) (*League, error)
@@ -1319,7 +1423,7 @@ func (c *Client) GetBuilderBaseLeague(ctx context.Context, id int) (*League, err
 GetBuilderBaseLeague fetches a Builder Base league by ID.
 
 <a name="Client.GetCapitalLeague"></a>
-### func \(\*Client\) [GetCapitalLeague](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L729>)
+### func \(\*Client\) [GetCapitalLeague](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L708>)
 
 ```go
 func (c *Client) GetCapitalLeague(ctx context.Context, id int) (*League, error)
@@ -1328,7 +1432,7 @@ func (c *Client) GetCapitalLeague(ctx context.Context, id int) (*League, error)
 GetCapitalLeague fetches a Clan Capital league by ID.
 
 <a name="Client.GetClan"></a>
-### func \(\*Client\) [GetClan](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L183>)
+### func \(\*Client\) [GetClan](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L209>)
 
 ```go
 func (c *Client) GetClan(ctx context.Context, tag string) (*Clan, error)
@@ -1337,16 +1441,16 @@ func (c *Client) GetClan(ctx context.Context, tag string) (*Clan, error)
 GetClan fetches a clan profile by tag.
 
 <a name="Client.GetClanLabels"></a>
-### func \(\*Client\) [GetClanLabels](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L771>)
+### func \(\*Client\) [GetClanLabels](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L753>)
 
 ```go
-func (c *Client) GetClanLabels(ctx context.Context, limit int, before, after string) ([]Label, error)
+func (c *Client) GetClanLabels(ctx context.Context, page PageOptions) ([]Label, error)
 ```
 
 GetClanLabels fetches clan labels with optional pagination.
 
 <a name="Client.GetClanWar"></a>
-### func \(\*Client\) [GetClanWar](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L271>)
+### func \(\*Client\) [GetClanWar](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L267>)
 
 ```go
 func (c *Client) GetClanWar(ctx context.Context, clanTag string) (*ClanWar, error)
@@ -1357,7 +1461,7 @@ GetClanWar fetches the regular current\-war endpoint for a clan.
 This method does not fall back to CWL. Use GetCurrentWar when you want the active normal war or the relevant Clan War League war.
 
 <a name="Client.GetClanWars"></a>
-### func \(\*Client\) [GetClanWars](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L326>)
+### func \(\*Client\) [GetClanWars](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L322>)
 
 ```go
 func (c *Client) GetClanWars(ctx context.Context, tags []string) ([]ClanWar, error)
@@ -1366,7 +1470,7 @@ func (c *Client) GetClanWars(ctx context.Context, tags []string) ([]ClanWar, err
 GetClanWars fetches the regular current war for each clan tag in order.
 
 <a name="Client.GetCurrentGoldPassSeason"></a>
-### func \(\*Client\) [GetCurrentGoldPassSeason](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L839>)
+### func \(\*Client\) [GetCurrentGoldPassSeason](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L827>)
 
 ```go
 func (c *Client) GetCurrentGoldPassSeason(ctx context.Context) (*GoldPassSeason, error)
@@ -1375,7 +1479,7 @@ func (c *Client) GetCurrentGoldPassSeason(ctx context.Context) (*GoldPassSeason,
 GetCurrentGoldPassSeason fetches the current Gold Pass season.
 
 <a name="Client.GetCurrentWar"></a>
-### func \(\*Client\) [GetCurrentWar](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L281>)
+### func \(\*Client\) [GetCurrentWar](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L277>)
 
 ```go
 func (c *Client) GetCurrentWar(ctx context.Context, clanTag string, round ...WarRound) (*ClanWar, error)
@@ -1386,7 +1490,7 @@ GetCurrentWar returns the clan's active normal war or relevant CWL war.
 The method first checks the regular current\-war endpoint. If the clan is not in a regular war, or the war log is private, it loads the CWL group and returns the selected league round for the clan. Passing no round selects CurrentWar. When no current war exists, the method returns nil, nil.
 
 <a name="Client.GetCurrentWars"></a>
-### func \(\*Client\) [GetCurrentWars](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L389>)
+### func \(\*Client\) [GetCurrentWars](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L385>)
 
 ```go
 func (c *Client) GetCurrentWars(ctx context.Context, tags []string) ([]ClanWar, error)
@@ -1395,16 +1499,16 @@ func (c *Client) GetCurrentWars(ctx context.Context, tags []string) ([]ClanWar, 
 GetCurrentWars fetches GetCurrentWar for each clan tag and omits clans with no current war.
 
 <a name="Client.GetEquipment"></a>
-### func \(\*Client\) [GetEquipment](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L914>)
+### func \(\*Client\) [GetEquipment](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L906>)
 
 ```go
-func (c *Client) GetEquipment(name string, level int) *Equipment
+func (c *Client) GetEquipment(name string, level int) *StaticUnit
 ```
 
 GetEquipment looks up hero equipment by name and level in embedded static data.
 
 <a name="Client.GetExtendedCWLGroupData"></a>
-### func \(\*Client\) [GetExtendedCWLGroupData](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L940>)
+### func \(\*Client\) [GetExtendedCWLGroupData](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L932>)
 
 ```go
 func (c *Client) GetExtendedCWLGroupData(name string) *ExtendedCWLGroup
@@ -1413,16 +1517,16 @@ func (c *Client) GetExtendedCWLGroupData(name string) *ExtendedCWLGroup
 GetExtendedCWLGroupData returns static medal data for a Clan War League tier by name.
 
 <a name="Client.GetHero"></a>
-### func \(\*Client\) [GetHero](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L887>)
+### func \(\*Client\) [GetHero](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L879>)
 
 ```go
-func (c *Client) GetHero(name string, level int) *Hero
+func (c *Client) GetHero(name string, level int) *StaticUnit
 ```
 
 GetHero looks up a hero by name and level in embedded static data.
 
 <a name="Client.GetLeague"></a>
-### func \(\*Client\) [GetLeague](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L714>)
+### func \(\*Client\) [GetLeague](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L693>)
 
 ```go
 func (c *Client) GetLeague(ctx context.Context, id int) (*League, error)
@@ -1431,7 +1535,7 @@ func (c *Client) GetLeague(ctx context.Context, id int) (*League, error)
 GetLeague fetches a home\-village league by ID.
 
 <a name="Client.GetLeagueGroup"></a>
-### func \(\*Client\) [GetLeagueGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L339>)
+### func \(\*Client\) [GetLeagueGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L335>)
 
 ```go
 func (c *Client) GetLeagueGroup(ctx context.Context, clanTag string) (*ClanWarLeagueGroup, error)
@@ -1440,7 +1544,7 @@ func (c *Client) GetLeagueGroup(ctx context.Context, clanTag string) (*ClanWarLe
 GetLeagueGroup fetches the current Clan War League group for a clan.
 
 <a name="Client.GetLeagueWar"></a>
-### func \(\*Client\) [GetLeagueWar](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L352>)
+### func \(\*Client\) [GetLeagueWar](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L348>)
 
 ```go
 func (c *Client) GetLeagueWar(ctx context.Context, clanTag string, round WarRound) (*ClanWar, error)
@@ -1451,7 +1555,7 @@ GetLeagueWar fetches the selected CWL round for a clan.
 The returned war is oriented so Clan is the requested clan and Opponent is the opposing side.
 
 <a name="Client.GetLeagueWars"></a>
-### func \(\*Client\) [GetLeagueWars](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L375>)
+### func \(\*Client\) [GetLeagueWars](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L371>)
 
 ```go
 func (c *Client) GetLeagueWars(ctx context.Context, warTags []string) ([]ClanWar, error)
@@ -1460,7 +1564,7 @@ func (c *Client) GetLeagueWars(ctx context.Context, warTags []string) ([]ClanWar
 GetLeagueWars fetches CWL wars by war tag.
 
 <a name="Client.GetLocation"></a>
-### func \(\*Client\) [GetLocation](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L565>)
+### func \(\*Client\) [GetLocation](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L551>)
 
 ```go
 func (c *Client) GetLocation(ctx context.Context, locationID int) (*Location, error)
@@ -1469,61 +1573,61 @@ func (c *Client) GetLocation(ctx context.Context, locationID int) (*Location, er
 GetLocation fetches a location by numeric ID.
 
 <a name="Client.GetLocationClans"></a>
-### func \(\*Client\) [GetLocationClans](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L606>)
+### func \(\*Client\) [GetLocationClans](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L585>)
 
 ```go
-func (c *Client) GetLocationClans(ctx context.Context, locationID, limit int, before, after string) ([]RankedClan, error)
+func (c *Client) GetLocationClans(ctx context.Context, locationID int, page PageOptions) ([]RankedClan, error)
 ```
 
 GetLocationClans fetches home\-village clan rankings for a numeric location ID.
 
 <a name="Client.GetLocationClansBuilderBase"></a>
-### func \(\*Client\) [GetLocationClansBuilderBase](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L654>)
+### func \(\*Client\) [GetLocationClansBuilderBase](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L633>)
 
 ```go
-func (c *Client) GetLocationClansBuilderBase(ctx context.Context, locationID, limit int, before, after string) ([]RankedClan, error)
+func (c *Client) GetLocationClansBuilderBase(ctx context.Context, locationID int, page PageOptions) ([]RankedClan, error)
 ```
 
 GetLocationClansBuilderBase fetches Builder Base clan rankings for a numeric location ID.
 
 <a name="Client.GetLocationClansBuilderBaseByLocationID"></a>
-### func \(\*Client\) [GetLocationClansBuilderBaseByLocationID](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L660>)
+### func \(\*Client\) [GetLocationClansBuilderBaseByLocationID](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L639>)
 
 ```go
-func (c *Client) GetLocationClansBuilderBaseByLocationID(ctx context.Context, locationID string, limit int, before, after string) ([]RankedClan, error)
+func (c *Client) GetLocationClansBuilderBaseByLocationID(ctx context.Context, locationID string, page PageOptions) ([]RankedClan, error)
 ```
 
 GetLocationClansBuilderBaseByLocationID fetches Builder Base clan rankings for a location ID string.
 
 <a name="Client.GetLocationClansByLocationID"></a>
-### func \(\*Client\) [GetLocationClansByLocationID](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L612>)
+### func \(\*Client\) [GetLocationClansByLocationID](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L591>)
 
 ```go
-func (c *Client) GetLocationClansByLocationID(ctx context.Context, locationID string, limit int, before, after string) ([]RankedClan, error)
+func (c *Client) GetLocationClansByLocationID(ctx context.Context, locationID string, page PageOptions) ([]RankedClan, error)
 ```
 
 GetLocationClansByLocationID fetches home\-village clan rankings for a location ID string.
 
 <a name="Client.GetLocationClansCapital"></a>
-### func \(\*Client\) [GetLocationClansCapital](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L622>)
+### func \(\*Client\) [GetLocationClansCapital](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L601>)
 
 ```go
-func (c *Client) GetLocationClansCapital(ctx context.Context, locationID, limit int, before, after string) ([]RankedClan, error)
+func (c *Client) GetLocationClansCapital(ctx context.Context, locationID int, page PageOptions) ([]RankedClan, error)
 ```
 
 GetLocationClansCapital fetches Clan Capital clan rankings for a numeric location ID.
 
 <a name="Client.GetLocationClansCapitalByLocationID"></a>
-### func \(\*Client\) [GetLocationClansCapitalByLocationID](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L628>)
+### func \(\*Client\) [GetLocationClansCapitalByLocationID](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L607>)
 
 ```go
-func (c *Client) GetLocationClansCapitalByLocationID(ctx context.Context, locationID string, limit int, before, after string) ([]RankedClan, error)
+func (c *Client) GetLocationClansCapitalByLocationID(ctx context.Context, locationID string, page PageOptions) ([]RankedClan, error)
 ```
 
 GetLocationClansCapitalByLocationID fetches Clan Capital clan rankings for a location ID string.
 
 <a name="Client.GetLocationNamed"></a>
-### func \(\*Client\) [GetLocationNamed](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L575>)
+### func \(\*Client\) [GetLocationNamed](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L564>)
 
 ```go
 func (c *Client) GetLocationNamed(ctx context.Context, locationName string) (*Location, error)
@@ -1534,61 +1638,61 @@ GetLocationNamed returns the first location whose name matches locationName case
 It returns nil, nil when no matching location is found.
 
 <a name="Client.GetLocationPlayers"></a>
-### func \(\*Client\) [GetLocationPlayers](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L638>)
+### func \(\*Client\) [GetLocationPlayers](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L617>)
 
 ```go
-func (c *Client) GetLocationPlayers(ctx context.Context, locationID, limit int, before, after string) ([]RankedPlayer, error)
+func (c *Client) GetLocationPlayers(ctx context.Context, locationID int, page PageOptions) ([]RankedPlayer, error)
 ```
 
 GetLocationPlayers fetches home\-village player rankings for a numeric location ID.
 
 <a name="Client.GetLocationPlayersBuilderBase"></a>
-### func \(\*Client\) [GetLocationPlayersBuilderBase](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L670>)
+### func \(\*Client\) [GetLocationPlayersBuilderBase](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L649>)
 
 ```go
-func (c *Client) GetLocationPlayersBuilderBase(ctx context.Context, locationID, limit int, before, after string) ([]RankedPlayer, error)
+func (c *Client) GetLocationPlayersBuilderBase(ctx context.Context, locationID int, page PageOptions) ([]RankedPlayer, error)
 ```
 
 GetLocationPlayersBuilderBase fetches Builder Base player rankings for a numeric location ID.
 
 <a name="Client.GetLocationPlayersBuilderBaseByLocationID"></a>
-### func \(\*Client\) [GetLocationPlayersBuilderBaseByLocationID](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L676>)
+### func \(\*Client\) [GetLocationPlayersBuilderBaseByLocationID](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L655>)
 
 ```go
-func (c *Client) GetLocationPlayersBuilderBaseByLocationID(ctx context.Context, locationID string, limit int, before, after string) ([]RankedPlayer, error)
+func (c *Client) GetLocationPlayersBuilderBaseByLocationID(ctx context.Context, locationID string, page PageOptions) ([]RankedPlayer, error)
 ```
 
 GetLocationPlayersBuilderBaseByLocationID fetches Builder Base player rankings for a location ID string.
 
 <a name="Client.GetLocationPlayersByLocationID"></a>
-### func \(\*Client\) [GetLocationPlayersByLocationID](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L644>)
+### func \(\*Client\) [GetLocationPlayersByLocationID](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L623>)
 
 ```go
-func (c *Client) GetLocationPlayersByLocationID(ctx context.Context, locationID string, limit int, before, after string) ([]RankedPlayer, error)
+func (c *Client) GetLocationPlayersByLocationID(ctx context.Context, locationID string, page PageOptions) ([]RankedPlayer, error)
 ```
 
 GetLocationPlayersByLocationID fetches home\-village player rankings for a location ID string.
 
 <a name="Client.GetMembers"></a>
-### func \(\*Client\) [GetMembers](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L193>)
+### func \(\*Client\) [GetMembers](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L219>)
 
 ```go
-func (c *Client) GetMembers(ctx context.Context, clanTag string, limit int, after, before string) ([]ClanMember, error)
+func (c *Client) GetMembers(ctx context.Context, clanTag string, page PageOptions) ([]ClanMember, error)
 ```
 
 GetMembers fetches a clan member page by clan tag.
 
 <a name="Client.GetPet"></a>
-### func \(\*Client\) [GetPet](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L900>)
+### func \(\*Client\) [GetPet](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L892>)
 
 ```go
-func (c *Client) GetPet(name string, level int) *Pet
+func (c *Client) GetPet(name string, level int) *StaticUnit
 ```
 
 GetPet looks up a pet by name and level in embedded static data.
 
 <a name="Client.GetPlayer"></a>
-### func \(\*Client\) [GetPlayer](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L789>)
+### func \(\*Client\) [GetPlayer](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L771>)
 
 ```go
 func (c *Client) GetPlayer(ctx context.Context, tag string) (*Player, error)
@@ -1597,25 +1701,25 @@ func (c *Client) GetPlayer(ctx context.Context, tag string) (*Player, error)
 GetPlayer fetches a player profile by tag.
 
 <a name="Client.GetPlayerLabels"></a>
-### func \(\*Client\) [GetPlayerLabels](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L780>)
+### func \(\*Client\) [GetPlayerLabels](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L762>)
 
 ```go
-func (c *Client) GetPlayerLabels(ctx context.Context, limit int, before, after string) ([]Label, error)
+func (c *Client) GetPlayerLabels(ctx context.Context, page PageOptions) ([]Label, error)
 ```
 
 GetPlayerLabels fetches player labels with optional pagination.
 
 <a name="Client.GetPlayerLeagueGroup"></a>
-### func \(\*Client\) [GetPlayerLeagueGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L814>)
+### func \(\*Client\) [GetPlayerLeagueGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L799>)
 
 ```go
-func (c *Client) GetPlayerLeagueGroup(ctx context.Context, playerTag, leagueGroupTag string, leagueSeasonID int) (*LeagueTierGroup, error)
+func (c *Client) GetPlayerLeagueGroup(ctx context.Context, playerTag, leagueGroupTag, leagueSeasonID string) (*LeagueTierGroup, error)
 ```
 
-GetPlayerLeagueGroup fetches a legend league group and scopes it to a player.
+GetPlayerLeagueGroup fetches a ranked group and scopes it to a player.
 
 <a name="Client.GetPlayerLeagueHistory"></a>
-### func \(\*Client\) [GetPlayerLeagueHistory](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L805>)
+### func \(\*Client\) [GetPlayerLeagueHistory](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L790>)
 
 ```go
 func (c *Client) GetPlayerLeagueHistory(ctx context.Context, playerTag string) ([]LeagueHistoryEntry, error)
@@ -1624,16 +1728,16 @@ func (c *Client) GetPlayerLeagueHistory(ctx context.Context, playerTag string) (
 GetPlayerLeagueHistory fetches a player's legend league history.
 
 <a name="Client.GetRaidLog"></a>
-### func \(\*Client\) [GetRaidLog](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L243>)
+### func \(\*Client\) [GetRaidLog](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L249>)
 
 ```go
-func (c *Client) GetRaidLog(ctx context.Context, clanTag string, limit int, after, before string) ([]RaidLogEntry, error)
+func (c *Client) GetRaidLog(ctx context.Context, clanTag string, page PageOptions) ([]RaidLogEntry, error)
 ```
 
 GetRaidLog fetches Clan Capital raid weekend log entries for a clan.
 
 <a name="Client.GetSeasonRankings"></a>
-### func \(\*Client\) [GetSeasonRankings](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L762>)
+### func \(\*Client\) [GetSeasonRankings](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L744>)
 
 ```go
 func (c *Client) GetSeasonRankings(ctx context.Context, leagueID int, seasonID string) ([]RankedPlayer, error)
@@ -1642,7 +1746,7 @@ func (c *Client) GetSeasonRankings(ctx context.Context, leagueID int, seasonID s
 GetSeasonRankings fetches player rankings for a league season.
 
 <a name="Client.GetSeasons"></a>
-### func \(\*Client\) [GetSeasons](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L742>)
+### func \(\*Client\) [GetSeasons](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L724>)
 
 ```go
 func (c *Client) GetSeasons(ctx context.Context, leagueID int) ([]string, error)
@@ -1653,16 +1757,16 @@ GetSeasons fetches available season IDs for a league.
 Passing leagueID 0 uses the default legend league ID.
 
 <a name="Client.GetSpell"></a>
-### func \(\*Client\) [GetSpell](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L874>)
+### func \(\*Client\) [GetSpell](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L866>)
 
 ```go
-func (c *Client) GetSpell(name string, level int) *Spell
+func (c *Client) GetSpell(name string, level int) *StaticUnit
 ```
 
 GetSpell looks up a spell by name and level in embedded static data.
 
 <a name="Client.GetTranslation"></a>
-### func \(\*Client\) [GetTranslation](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L927>)
+### func \(\*Client\) [GetTranslation](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L919>)
 
 ```go
 func (c *Client) GetTranslation(id string) *Translation
@@ -1671,16 +1775,16 @@ func (c *Client) GetTranslation(id string) *Translation
 GetTranslation returns a translation entry by static\-data translation ID.
 
 <a name="Client.GetTroop"></a>
-### func \(\*Client\) [GetTroop](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L853>)
+### func \(\*Client\) [GetTroop](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L844>)
 
 ```go
-func (c *Client) GetTroop(name string, isHomeVillage bool, level int) *Troop
+func (c *Client) GetTroop(name string, isHomeVillage bool, level int) *StaticUnit
 ```
 
 GetTroop looks up a troop by name, village, and level in embedded static data.
 
 <a name="Client.GetWarLeague"></a>
-### func \(\*Client\) [GetWarLeague](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L724>)
+### func \(\*Client\) [GetWarLeague](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L703>)
 
 ```go
 func (c *Client) GetWarLeague(ctx context.Context, id int) (*League, error)
@@ -1689,16 +1793,16 @@ func (c *Client) GetWarLeague(ctx context.Context, id int) (*League, error)
 GetWarLeague fetches a Clan War League tier by ID.
 
 <a name="Client.GetWarLog"></a>
-### func \(\*Client\) [GetWarLog](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L218>)
+### func \(\*Client\) [GetWarLog](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L234>)
 
 ```go
-func (c *Client) GetWarLog(ctx context.Context, clanTag string, limit int, after, before string) ([]ClanWarLogEntry, error)
+func (c *Client) GetWarLog(ctx context.Context, clanTag string, page PageOptions) ([]ClanWarLogEntry, error)
 ```
 
 GetWarLog fetches public war log entries for a clan.
 
 <a name="Client.Login"></a>
-### func \(\*Client\) [Login](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L49>)
+### func \(\*Client\) [Login](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L44>)
 
 ```go
 func (c *Client) Login(ctx context.Context, email, password string) error
@@ -1709,7 +1813,7 @@ Login authenticates with developer\-site email and password credentials.
 The developer login flow discovers or creates API keys, stores them in the underlying HTTP client, and uses those keys for later Clash API requests.
 
 <a name="Client.LoginWithTokens"></a>
-### func \(\*Client\) [LoginWithTokens](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L57>)
+### func \(\*Client\) [LoginWithTokens](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L52>)
 
 ```go
 func (c *Client) LoginWithTokens(_ context.Context, tokens ...string) error
@@ -1720,7 +1824,7 @@ LoginWithTokens configures one or more existing Clash API tokens.
 Tokens are rotated by the underlying HTTP client. The context parameter is accepted for API symmetry with Login.
 
 <a name="Client.ParseAccountData"></a>
-### func \(\*Client\) [ParseAccountData](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L850>)
+### func \(\*Client\) [ParseAccountData](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L841>)
 
 ```go
 func (c *Client) ParseAccountData(data map[string]any) AccountData
@@ -1729,7 +1833,7 @@ func (c *Client) ParseAccountData(data map[string]any) AccountData
 ParseAccountData wraps arbitrary account\-link data without mutating it.
 
 <a name="Client.ParseArmyLink"></a>
-### func \(\*Client\) [ParseArmyLink](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L847>)
+### func \(\*Client\) [ParseArmyLink](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L838>)
 
 ```go
 func (c *Client) ParseArmyLink(link string) ArmyRecipe
@@ -1738,25 +1842,25 @@ func (c *Client) ParseArmyLink(link string) ArmyRecipe
 ParseArmyLink parses a full Clash army link or raw army payload using the client's static data.
 
 <a name="Client.SearchBuilderBaseLeagues"></a>
-### func \(\*Client\) [SearchBuilderBaseLeagues](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L699>)
+### func \(\*Client\) [SearchBuilderBaseLeagues](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L678>)
 
 ```go
-func (c *Client) SearchBuilderBaseLeagues(ctx context.Context, limit int, before, after string) ([]League, error)
+func (c *Client) SearchBuilderBaseLeagues(ctx context.Context, page PageOptions) ([]League, error)
 ```
 
 SearchBuilderBaseLeagues fetches Builder Base leagues with optional pagination.
 
 <a name="Client.SearchCapitalLeagues"></a>
-### func \(\*Client\) [SearchCapitalLeagues](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L709>)
+### func \(\*Client\) [SearchCapitalLeagues](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L688>)
 
 ```go
-func (c *Client) SearchCapitalLeagues(ctx context.Context, limit int, before, after string) ([]League, error)
+func (c *Client) SearchCapitalLeagues(ctx context.Context, page PageOptions) ([]League, error)
 ```
 
 SearchCapitalLeagues fetches Clan Capital leagues with optional pagination.
 
 <a name="Client.SearchClans"></a>
-### func \(\*Client\) [SearchClans](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L168>)
+### func \(\*Client\) [SearchClans](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L194>)
 
 ```go
 func (c *Client) SearchClans(ctx context.Context, req SearchClansRequest) ([]Clan, error)
@@ -1765,34 +1869,34 @@ func (c *Client) SearchClans(ctx context.Context, req SearchClansRequest) ([]Cla
 SearchClans searches clans using the provided optional filters.
 
 <a name="Client.SearchLeagues"></a>
-### func \(\*Client\) [SearchLeagues](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L693>)
+### func \(\*Client\) [SearchLeagues](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L672>)
 
 ```go
-func (c *Client) SearchLeagues(ctx context.Context, limit int, before, after string) ([]League, error)
+func (c *Client) SearchLeagues(ctx context.Context, page PageOptions) ([]League, error)
 ```
 
 SearchLeagues fetches home\-village leagues with optional pagination.
 
 <a name="Client.SearchLocations"></a>
-### func \(\*Client\) [SearchLocations](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L540>)
+### func \(\*Client\) [SearchLocations](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L536>)
 
 ```go
-func (c *Client) SearchLocations(ctx context.Context, limit int, before, after string) ([]Location, error)
+func (c *Client) SearchLocations(ctx context.Context, page PageOptions) ([]Location, error)
 ```
 
 SearchLocations fetches API locations with optional pagination.
 
 <a name="Client.SearchWarLeagues"></a>
-### func \(\*Client\) [SearchWarLeagues](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L704>)
+### func \(\*Client\) [SearchWarLeagues](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L683>)
 
 ```go
-func (c *Client) SearchWarLeagues(ctx context.Context, limit int, before, after string) ([]League, error)
+func (c *Client) SearchWarLeagues(ctx context.Context, page PageOptions) ([]League, error)
 ```
 
 SearchWarLeagues fetches Clan War League tiers with optional pagination.
 
 <a name="Client.StaticData"></a>
-### func \(\*Client\) [StaticData](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L69>)
+### func \(\*Client\) [StaticData](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L66>)
 
 ```go
 func (c *Client) StaticData() *StaticData
@@ -1800,17 +1904,8 @@ func (c *Client) StaticData() *StaticData
 
 StaticData returns the client's embedded static\-data index.
 
-<a name="Client.UpdateStatic"></a>
-### func \(\*Client\) [UpdateStatic](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L61>)
-
-```go
-func (c *Client) UpdateStatic(ctx context.Context) error
-```
-
-UpdateStatic downloads the latest ClashKing static\-data and translation JSON, writes the embedded source files, and refreshes this client's in\-memory StaticData.
-
 <a name="Client.VerifyPlayerToken"></a>
-### func \(\*Client\) [VerifyPlayerToken](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L827>)
+### func \(\*Client\) [VerifyPlayerToken](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L815>)
 
 ```go
 func (c *Client) VerifyPlayerToken(ctx context.Context, playerTag, token string) (bool, error)
@@ -1819,9 +1914,9 @@ func (c *Client) VerifyPlayerToken(ctx context.Context, playerTag, token string)
 VerifyPlayerToken verifies an in\-game player API token.
 
 <a name="ClientConfig"></a>
-## type [ClientConfig](<https://github.com/ClashKingInc/clashy.go/blob/main/config.go#L11-L55>)
+## type [ClientConfig](<https://github.com/ClashKingInc/clashy.go/blob/main/config.go#L11-L53>)
 
-ClientConfig controls API endpoints, authentication behavior, request throttling, response caching, and static\-data loading.
+ClientConfig controls API endpoints, authentication behavior, request throttling, response caching, and transport behavior.
 
 Most callers should start from DefaultClientConfig and override only the fields that differ for their service. The zero value is not the recommended production configuration because it has no API base URL or timeout.
 
@@ -1838,6 +1933,11 @@ type ClientConfig struct {
     ThrottleLimit int
     // Timeout is applied to the underlying http.Client.
     Timeout time.Duration
+    // MaxBaseURLConns optionally caps total active and idle connections to the
+    // configured API base URL.
+    MaxBaseURLConns int
+    // IdleConnTimeout controls how long idle HTTP connections remain reusable.
+    IdleConnTimeout time.Duration
     // BaseURL is the Clash API or compatible proxy base URL, usually ending in
     // /v1 without a trailing slash.
     BaseURL string
@@ -1848,23 +1948,16 @@ type ClientConfig struct {
     IP  string
     // Realtime adds realtime=true to current-war requests that support it.
     Realtime bool
-    // CorrectTags enables Clash tag normalization before tags are placed in API
-    // paths or query strings.
-    CorrectTags bool
     // CacheMaxSize bounds the number of GET responses retained in memory.
     CacheMaxSize int
+    // CacheMaxEntryBytes prevents unusually large responses from being retained
+    // in the in-memory cache. A value less than or equal to zero disables this
+    // per-entry limit.
+    CacheMaxEntryBytes int
     // LookupCache allows GET requests to return fresh cached responses.
     LookupCache bool
     // UpdateCache allows successful GET responses to refresh the in-memory cache.
     UpdateCache bool
-    // IgnoreCachedErrors is reserved for compatibility with callers that model
-    // cache behavior after coc.py; current request handling does not use it.
-    IgnoreCachedErrors []int
-    // RawJSON is reserved for callers that need raw response capture; current
-    // high-level methods unmarshal into typed models.
-    RawJSON bool
-    // LoadGameData describes when static game data should be loaded.
-    LoadGameData LoadGameData
     // UserAgent is sent with Clash API or proxy requests.
     UserAgent string
     // DeveloperUserAgent is sent with developer-site login and key-management
@@ -1874,7 +1967,7 @@ type ClientConfig struct {
 ```
 
 <a name="DefaultClientConfig"></a>
-### func [DefaultClientConfig](<https://github.com/ClashKingInc/clashy.go/blob/main/config.go#L63>)
+### func [DefaultClientConfig](<https://github.com/ClashKingInc/clashy.go/blob/main/config.go#L61>)
 
 ```go
 func DefaultClientConfig() ClientConfig
@@ -1882,12 +1975,12 @@ func DefaultClientConfig() ClientConfig
 
 DefaultClientConfig returns the recommended baseline configuration for the official Clash of Clans API.
 
-The defaults enable tag correction, GET response caching, embedded static data, a 30 second timeout, and a conservative request throttle. Callers using a ClashKing proxy typically override BaseURL and may enable Realtime.
+The defaults enable GET response caching, a 30 second timeout, and a conservative request throttle. Callers using a ClashKing proxy typically override BaseURL and may enable Realtime.
 
 <a name="Equipment"></a>
-## type [Equipment](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L212-L224>)
+## type [Equipment](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L210-L221>)
 
-Equipment is hero equipment from a player response or static lookup.
+Equipment is hero equipment from a player response.
 
 ```go
 type Equipment struct {
@@ -1901,21 +1994,20 @@ type Equipment struct {
     Village string `json:"village"`
     // Rarity is the equipment rarity when static data includes it.
     Rarity string `json:"rarity"`
-    StaticUnit
 }
 ```
 
 <a name="Equipment.Static"></a>
-### func \(Equipment\) [Static](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L228>)
+### func \(Equipment\) [Static](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L225>)
 
 ```go
-func (e Equipment) Static(c *Client) *Equipment
+func (e Equipment) Static(c *Client) *StaticUnit
 ```
 
 Static returns the embedded static\-data record matching this equipment's name and level.
 
 <a name="ExtendedCWLGroup"></a>
-## type [ExtendedCWLGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L172-L179>)
+## type [ExtendedCWLGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L202-L209>)
 
 ExtendedCWLGroup contains static medal information for a CWL league.
 
@@ -1949,7 +2041,7 @@ type GatewayError struct{ *HTTPException }
 ```
 
 <a name="GoldPassSeason"></a>
-## type [GoldPassSeason](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L189-L195>)
+## type [GoldPassSeason](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L203-L209>)
 
 GoldPassSeason describes the current Gold Pass season.
 
@@ -1964,7 +2056,7 @@ type GoldPassSeason struct {
 ```
 
 <a name="HTTPClient"></a>
-## type [HTTPClient](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L30-L40>)
+## type [HTTPClient](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L40-L51>)
 
 HTTPClient performs low\-level Clash API and developer\-site HTTP requests.
 
@@ -1977,7 +2069,7 @@ type HTTPClient struct {
 ```
 
 <a name="NewHTTPClient"></a>
-### func [NewHTTPClient](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L43>)
+### func [NewHTTPClient](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L54>)
 
 ```go
 func NewHTTPClient(cfg ClientConfig) *HTTPClient
@@ -1985,19 +2077,28 @@ func NewHTTPClient(cfg ClientConfig) *HTTPClient
 
 NewHTTPClient constructs an HTTPClient from cfg.
 
-<a name="HTTPClient.Do"></a>
-### func \(\*HTTPClient\) [Do](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L79>)
+<a name="HTTPClient.CloseIdleConnections"></a>
+### func \(\*HTTPClient\) [CloseIdleConnections](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L196>)
 
 ```go
-func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, options RequestOptions) ([]byte, int, int, error)
+func (h *HTTPClient) CloseIdleConnections()
 ```
 
-Do sends one HTTP request and returns the response body, status code, retry cache duration in seconds, and error.
+CloseIdleConnections closes idle keep\-alive connections owned by this client's transport.
 
-Non\-2xx API responses are converted into the package's typed HTTP errors. Successful GET responses can be read from or written to the in\-memory cache depending on RequestOptions.
+<a name="HTTPClient.Do"></a>
+### func \(\*HTTPClient\) [Do](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L103>)
+
+```go
+func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, options RequestOptions) (HTTPResponse, error)
+```
+
+Do sends one HTTP request and returns its named result.
+
+Non\-2xx API responses return the HTTPResponse alongside the package's typed HTTP error. Successful GET responses can be read from or written to the in\-memory cache depending on RequestOptions.
 
 <a name="HTTPClient.LoginDeveloper"></a>
-### func \(\*HTTPClient\) [LoginDeveloper](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L185>)
+### func \(\*HTTPClient\) [LoginDeveloper](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L218>)
 
 ```go
 func (h *HTTPClient) LoginDeveloper(ctx context.Context, email, password string) error
@@ -2008,7 +2109,7 @@ LoginDeveloper authenticates against the Clash developer site and configures API
 The method reuses matching keys for the configured IP and key name when possible, creating more keys until ClientConfig.KeyCount is satisfied.
 
 <a name="HTTPClient.SetTokens"></a>
-### func \(\*HTTPClient\) [SetTokens](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L55>)
+### func \(\*HTTPClient\) [SetTokens](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L79>)
 
 ```go
 func (h *HTTPClient) SetTokens(tokens ...string)
@@ -2048,10 +2149,26 @@ func (e *HTTPException) Error() string
 
 Error implements the error interface.
 
-<a name="Hero"></a>
-## type [Hero](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L165-L178>)
+<a name="HTTPResponse"></a>
+## type [HTTPResponse](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L26-L33>)
 
-Hero is a player hero or static hero lookup result.
+HTTPResponse is the result of a low\-level HTTP request.
+
+```go
+type HTTPResponse struct {
+    // Body is the decoded response payload.
+    Body []byte
+    // StatusCode is the HTTP response status.
+    StatusCode int
+    // RetryAfter is the remaining server-declared cache lifetime.
+    RetryAfter time.Duration
+}
+```
+
+<a name="Hero"></a>
+## type [Hero](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L165-L177>)
+
+Hero is a hero from a player response.
 
 ```go
 type Hero struct {
@@ -2066,21 +2183,20 @@ type Hero struct {
     // Equipment contains equipment currently assigned to this hero when the API
     // includes loadout data.
     Equipment []Equipment `json:"equipment"`
-    StaticUnit
 }
 ```
 
 <a name="Hero.Static"></a>
-### func \(Hero\) [Static](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L182>)
+### func \(Hero\) [Static](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L181>)
 
 ```go
-func (h Hero) Static(c *Client) *Hero
+func (h Hero) Static(c *Client) *StaticUnit
 ```
 
 Static returns the embedded static\-data record matching this hero's name and level.
 
 <a name="HeroLoadout"></a>
-## type [HeroLoadout](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L236-L243>)
+## type [HeroLoadout](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L233-L240>)
 
 HeroLoadout is one hero, pet, and equipment grouping parsed from an army link.
 
@@ -2096,7 +2212,7 @@ type HeroLoadout struct {
 ```
 
 <a name="Icon"></a>
-## type [Icon](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L74-L81>)
+## type [Icon](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L88-L95>)
 
 Icon contains small icon URLs returned for leagues and labels.
 
@@ -2130,7 +2246,7 @@ type InvalidCredentials struct{ *HTTPException }
 ```
 
 <a name="Label"></a>
-## type [Label](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L152-L160>)
+## type [Label](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L166-L174>)
 
 Label is a player or clan label.
 
@@ -2147,7 +2263,7 @@ type Label struct {
 ```
 
 <a name="League"></a>
-## type [League](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L117-L125>)
+## type [League](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L131-L139>)
 
 League is a league, war league, builder\-base league, or capital league.
 
@@ -2164,7 +2280,7 @@ type League struct {
 ```
 
 <a name="LeagueHistoryEntry"></a>
-## type [LeagueHistoryEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L36-L60>)
+## type [LeagueHistoryEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L44-L68>)
 
 LeagueHistoryEntry is one historical legend\-league season result.
 
@@ -2197,7 +2313,7 @@ type LeagueHistoryEntry struct {
 ```
 
 <a name="LeagueTierGroup"></a>
-## type [LeagueTierGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L101-L109>)
+## type [LeagueTierGroup](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L109-L117>)
 
 LeagueTierGroup contains members and battle logs for a legend league group.
 
@@ -2214,7 +2330,7 @@ type LeagueTierGroup struct {
 ```
 
 <a name="LeagueTierGroupBattleLogEntry"></a>
-## type [LeagueTierGroupBattleLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L63-L76>)
+## type [LeagueTierGroupBattleLogEntry](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L71-L84>)
 
 LeagueTierGroupBattleLogEntry is one attack or defense inside a legend group.
 
@@ -2236,7 +2352,7 @@ type LeagueTierGroupBattleLogEntry struct {
 ```
 
 <a name="LeagueTierGroupMember"></a>
-## type [LeagueTierGroupMember](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L79-L98>)
+## type [LeagueTierGroupMember](<https://github.com/ClashKingInc/clashy.go/blob/main/battle_logs.go#L87-L106>)
 
 LeagueTierGroupMember is one player in a legend league group.
 
@@ -2264,7 +2380,7 @@ type LeagueTierGroupMember struct {
 ```
 
 <a name="LegendStatistics"></a>
-## type [LegendStatistics](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L138-L149>)
+## type [LegendStatistics](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L152-L163>)
 
 LegendStatistics contains a player's legend trophies and season snapshots.
 
@@ -2283,37 +2399,37 @@ type LegendStatistics struct {
 }
 ```
 
-<a name="LoadGameData"></a>
-## type [LoadGameData](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L83-L94>)
+<a name="Limiter"></a>
+## type [Limiter](<https://github.com/ClashKingInc/clashy.go/blob/main/limiter.go#L17-L27>)
 
-LoadGameData describes when static game data should be loaded.
+Limiter gates request starts with a strict rolling one\-second window and also caps concurrent in\-flight work.
 
 ```go
-type LoadGameData struct {
-    // Default uses the package's normal embedded static-data behavior.
-    Default bool
-    // StartupOnly indicates static data should be loaded during client
-    // construction only.
-    StartupOnly bool
-    // Always indicates static data should be refreshed whenever supported by the
-    // caller's workflow.
-    Always bool
-    // Never indicates static data should not be loaded.
-    Never bool
+type Limiter struct {
+    // contains filtered or unexported fields
 }
 ```
 
-<a name="DefaultLoadGameData"></a>
-### func [DefaultLoadGameData](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L97>)
+<a name="NewLimiter"></a>
+### func [NewLimiter](<https://github.com/ClashKingInc/clashy.go/blob/main/limiter.go#L31>)
 
 ```go
-func DefaultLoadGameData() LoadGameData
+func NewLimiter(rps, maxInFlight int) (*Limiter, error)
 ```
 
-DefaultLoadGameData returns the default static\-data loading policy.
+NewLimiter creates a limiter. If maxInFlight is zero or negative, rps is used as the in\-flight limit.
+
+<a name="Limiter.Acquire"></a>
+### func \(\*Limiter\) [Acquire](<https://github.com/ClashKingInc/clashy.go/blob/main/limiter.go#L49>)
+
+```go
+func (l *Limiter) Acquire(ctx context.Context) (func(), error)
+```
+
+Acquire waits until starting one more operation stays within both the RPS and in\-flight limits. The returned release function must be called once the operation finishes.
 
 <a name="Location"></a>
-## type [Location](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L102-L114>)
+## type [Location](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L116-L128>)
 
 Location is a country or global location used by ranking endpoints.
 
@@ -2351,10 +2467,26 @@ NotFound represents a 404 response from the API.
 type NotFound struct{ *HTTPException }
 ```
 
-<a name="Pet"></a>
-## type [Pet](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L190-L200>)
+<a name="PageOptions"></a>
+## type [PageOptions](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L99-L106>)
 
-Pet is a hero pet from a player response or static lookup.
+PageOptions contains the optional cursor pagination values used by list endpoints.
+
+```go
+type PageOptions struct {
+    // Limit controls the requested page size.
+    Limit int
+    // Before is the backward pagination cursor.
+    Before string
+    // After is the forward pagination cursor.
+    After string
+}
+```
+
+<a name="Pet"></a>
+## type [Pet](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L189-L198>)
+
+Pet is a hero pet from a player response.
 
 ```go
 type Pet struct {
@@ -2366,15 +2498,14 @@ type Pet struct {
     MaxLevel int `json:"maxLevel"`
     // Village identifies the pet's village.
     Village string `json:"village"`
-    StaticUnit
 }
 ```
 
 <a name="Pet.Static"></a>
-### func \(Pet\) [Static](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L204>)
+### func \(Pet\) [Static](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L202>)
 
 ```go
-func (p Pet) Static(c *Client) *Pet
+func (p Pet) Static(c *Client) *StaticUnit
 ```
 
 Static returns the embedded static\-data record matching this pet's name and level.
@@ -2534,7 +2665,7 @@ type PlayerClan struct {
 ```
 
 <a name="PlayerHouseElement"></a>
-## type [PlayerHouseElement](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L198-L203>)
+## type [PlayerHouseElement](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L212-L217>)
 
 PlayerHouseElement is one cosmetic element of a player's house.
 
@@ -2740,13 +2871,19 @@ type RankedClan struct {
 ```
 
 <a name="RankedPlayer"></a>
-## type [RankedPlayer](<https://github.com/ClashKingInc/clashy.go/blob/main/response.go#L17-L23>)
+## type [RankedPlayer](<https://github.com/ClashKingInc/clashy.go/blob/main/response.go#L17-L29>)
 
 RankedPlayer is a player ranking entry.
 
 ```go
 type RankedPlayer struct {
     Player
+    // League is the player's ranking league when the endpoint includes it.
+    League League `json:"league,omitempty"`
+    // AttackWins is the player's attack win count in the ranking.
+    AttackWins int `json:"attackWins,omitempty"`
+    // DefenseWins is the player's defense win count in the ranking.
+    DefenseWins int `json:"defenseWins,omitempty"`
     // Rank is the current ranking position.
     Rank int `json:"rank,omitempty"`
     // PreviousRank is the previous ranking position when the API provides it.
@@ -2755,7 +2892,7 @@ type RankedPlayer struct {
 ```
 
 <a name="RequestOptions"></a>
-## type [RequestOptions](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L170-L178>)
+## type [RequestOptions](<https://github.com/ClashKingInc/clashy.go/blob/main/http.go#L203-L211>)
 
 RequestOptions controls per\-request behavior for HTTPClient.Do.
 
@@ -2810,7 +2947,7 @@ const (
 ```
 
 <a name="SearchClansRequest"></a>
-## type [SearchClansRequest](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L100-L123>)
+## type [SearchClansRequest](<https://github.com/ClashKingInc/clashy.go/blob/main/client.go#L126-L149>)
 
 SearchClansRequest contains optional filters for SearchClans.
 
@@ -2844,13 +2981,13 @@ type SearchClansRequest struct {
 ```
 
 <a name="Season"></a>
-## type [Season](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L128-L135>)
+## type [Season](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L142-L149>)
 
 Season describes one ranked season placement.
 
 ```go
 type Season struct {
-    // ID is the season identifier, usually YYYY-MM.
+    // ID is the season identifier returned by the API.
     ID  string `json:"id"`
     // Rank is the player's season rank.
     Rank int `json:"rank"`
@@ -2860,7 +2997,7 @@ type Season struct {
 ```
 
 <a name="SeasonWindow"></a>
-## type [SeasonWindow](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L23-L30>)
+## type [SeasonWindow](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L25-L32>)
 
 
 
@@ -2876,7 +3013,7 @@ type SeasonWindow struct {
 ```
 
 <a name="GetSeason"></a>
-### func [GetSeason](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L147>)
+### func [GetSeason](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L185>)
 
 ```go
 func GetSeason(timestamp time.Time, forward bool) SeasonWindow
@@ -2887,7 +3024,7 @@ GetSeason returns the trophy season window containing timestamp.
 Passing a zero timestamp uses the current UTC time. Before the 2025 season calendar change, seasons end on the last Monday of the month at 05:00 UTC. From the September 2025 transition onward, seasons follow fixed 28 day windows.
 
 <a name="GetSeasonByID"></a>
-### func [GetSeasonByID](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L187>)
+### func [GetSeasonByID](<https://github.com/ClashKingInc/clashy.go/blob/main/utils.go#L225>)
 
 ```go
 func GetSeasonByID(seasonID string) (SeasonWindow, error)
@@ -2936,9 +3073,9 @@ func main() {
 </details>
 
 <a name="Spell"></a>
-## type [Spell](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L143-L153>)
+## type [Spell](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L144-L153>)
 
-Spell is a player spell or static spell lookup result.
+Spell is a spell from a player response.
 
 ```go
 type Spell struct {
@@ -2950,7 +3087,6 @@ type Spell struct {
     MaxLevel int `json:"maxLevel"`
     // Village identifies the spell's village when static data provides one.
     Village string `json:"village"`
-    StaticUnit
 }
 ```
 
@@ -2958,13 +3094,13 @@ type Spell struct {
 ### func \(Spell\) [Static](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L157>)
 
 ```go
-func (s Spell) Static(c *Client) *Spell
+func (s Spell) Static(c *Client) *StaticUnit
 ```
 
 Static returns the embedded static\-data record matching this spell's name and level.
 
 <a name="SpellCount"></a>
-## type [SpellCount](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L270-L275>)
+## type [SpellCount](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L267-L272>)
 
 SpellCount pairs a spell with a quantity from an army link.
 
@@ -2978,26 +3114,18 @@ type SpellCount struct {
 ```
 
 <a name="StaticData"></a>
-## type [StaticData](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L24-L34>)
+## type [StaticData](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L19-L24>)
 
 StaticData is the parsed and indexed ClashKing static data embedded in the package.
 
 ```go
 type StaticData struct {
-    // Raw preserves static-data sections exactly as parsed from static_data.json.
-    Raw map[string][]map[string]any
-    // ByID indexes static-data entries by their numeric _id value.
-    ByID map[int]map[string]any
-    // ByName indexes static-data entries by normalized name, section, and
-    // village.
-    ByName map[string]map[string]any
-    // Translations maps translation IDs to language-code/value maps.
-    Translations map[string]map[string]string
+    // contains filtered or unexported fields
 }
 ```
 
 <a name="LoadStaticData"></a>
-### func [LoadStaticData](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L51>)
+### func [LoadStaticData](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L34>)
 
 ```go
 func LoadStaticData() (*StaticData, error)
@@ -3006,7 +3134,7 @@ func LoadStaticData() (*StaticData, error)
 LoadStaticData parses the embedded static\-data files once and returns the shared indexed result.
 
 <a name="StaticData.LookupByID"></a>
-### func \(\*StaticData\) [LookupByID](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L170>)
+### func \(\*StaticData\) [LookupByID](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L88>)
 
 ```go
 func (s *StaticData) LookupByID(id int) map[string]any
@@ -3015,7 +3143,7 @@ func (s *StaticData) LookupByID(id int) map[string]any
 LookupByID returns a static\-data entry by numeric static ID.
 
 <a name="StaticData.LookupByName"></a>
-### func \(\*StaticData\) [LookupByName](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L162>)
+### func \(\*StaticData\) [LookupByName](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L83>)
 
 ```go
 func (s *StaticData) LookupByName(name, section, village string) map[string]any
@@ -3025,34 +3153,72 @@ LookupByName returns a static\-data entry by display name, section, and village.
 
 The lookup is case\-insensitive. The section should match a top\-level static data section such as "troops", "spells", "heroes", "pets", or "equipment".
 
+<a name="StaticData.Section"></a>
+### func \(\*StaticData\) [Section](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L93>)
+
+```go
+func (s *StaticData) Section(name string) []map[string]any
+```
+
+Section returns an isolated copy of one top\-level static\-data section.
+
+<a name="StaticData.Sections"></a>
+### func \(\*StaticData\) [Sections](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L106>)
+
+```go
+func (s *StaticData) Sections() map[string][]map[string]any
+```
+
+Sections returns an isolated copy of all top\-level static\-data sections.
+
+<a name="StaticData.Translation"></a>
+### func \(\*StaticData\) [Translation](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L118>)
+
+```go
+func (s *StaticData) Translation(id string) map[string]string
+```
+
+Translation returns an isolated language map for one translation ID.
+
+<a name="StaticData.Translations"></a>
+### func \(\*StaticData\) [Translations](<https://github.com/ClashKingInc/clashy.go/blob/main/static.go#L130>)
+
+```go
+func (s *StaticData) Translations() map[string]map[string]string
+```
+
+Translations returns an isolated copy of all translations.
+
 <a name="StaticUnit"></a>
-## type [StaticUnit](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L15-L30>)
+## type [StaticUnit](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L15-L32>)
 
 StaticUnit contains normalized static\-data fields shared by troops, spells, heroes, pets, and hero equipment.
 
 ```go
 type StaticUnit struct {
     // Name is the unit or equipment display name.
-    Name string
+    Name string `json:"name"`
     // Level is the selected level for this static lookup.
-    Level int
+    Level int `json:"level"`
     // MaxLevel is the maximum level found in static data.
-    MaxLevel int
+    MaxLevel int `json:"maxLevel"`
     // Village identifies the village this object belongs to.
-    Village string
+    Village string `json:"village"`
     // UpgradeCost is the cost for the selected level when static data includes
     // it.
-    UpgradeCost int
+    UpgradeCost int `json:"upgradeCost"`
     // UpgradeTime is the upgrade duration for the selected level when static data
     // includes it.
-    UpgradeTime time.Duration
+    UpgradeTime time.Duration `json:"upgradeTime"`
+    // Rarity is populated for hero equipment when static data includes it.
+    Rarity string `json:"rarity,omitempty"`
 }
 ```
 
 <a name="TimeDelta"></a>
-## type [TimeDelta](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L47-L50>)
+## type [TimeDelta](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L61-L64>)
 
-TimeDelta wraps a duration for coc.py\-style helper compatibility.
+TimeDelta represents an elapsed duration.
 
 ```go
 type TimeDelta struct {
@@ -3062,14 +3228,15 @@ type TimeDelta struct {
 ```
 
 <a name="Timestamp"></a>
-## type [Timestamp](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L9-L15>)
+## type [Timestamp](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L9-L16>)
 
 Timestamp stores both the raw Clash API timestamp string and its parsed time.
 
 ```go
 type Timestamp struct {
-    // RawTime is the original API timestamp, usually in 20060102T150405.000Z
-    // format.
+    // RawTime is the original API timestamp.
+    //
+    //	20060102T150405.000Z
     RawTime string
     // Time is the parsed UTC time.
     Time time.Time
@@ -3077,7 +3244,7 @@ type Timestamp struct {
 ```
 
 <a name="Timestamp.After"></a>
-### func \(Timestamp\) [After](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L44>)
+### func \(Timestamp\) [After](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L58>)
 
 ```go
 func (t Timestamp) After(other Timestamp) bool
@@ -3086,7 +3253,7 @@ func (t Timestamp) After(other Timestamp) bool
 After reports whether this timestamp occurs after another timestamp.
 
 <a name="Timestamp.Before"></a>
-### func \(Timestamp\) [Before](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L41>)
+### func \(Timestamp\) [Before](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L55>)
 
 ```go
 func (t Timestamp) Before(other Timestamp) bool
@@ -3094,8 +3261,17 @@ func (t Timestamp) Before(other Timestamp) bool
 
 Before reports whether this timestamp occurs before another timestamp.
 
+<a name="Timestamp.MarshalJSON"></a>
+### func \(Timestamp\) [MarshalJSON](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L38>)
+
+```go
+func (t Timestamp) MarshalJSON() ([]byte, error)
+```
+
+MarshalJSON encodes Timestamp using the Clash API timestamp format.
+
 <a name="Timestamp.SecondsUntil"></a>
-### func \(Timestamp\) [SecondsUntil](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L33>)
+### func \(Timestamp\) [SecondsUntil](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L47>)
 
 ```go
 func (t Timestamp) SecondsUntil() int
@@ -3104,7 +3280,7 @@ func (t Timestamp) SecondsUntil() int
 SecondsUntil returns the number of whole seconds from now until the timestamp.
 
 <a name="Timestamp.UnmarshalJSON"></a>
-### func \(\*Timestamp\) [UnmarshalJSON](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L18>)
+### func \(\*Timestamp\) [UnmarshalJSON](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L19>)
 
 ```go
 func (t *Timestamp) UnmarshalJSON(data []byte) error
@@ -3113,7 +3289,7 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error
 UnmarshalJSON parses Clash API timestamp strings into Timestamp values.
 
 <a name="Translation"></a>
-## type [Translation](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L206-L213>)
+## type [Translation](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L220-L227>)
 
 Translation contains one static\-data translation entry.
 
@@ -3129,7 +3305,7 @@ type Translation struct {
 ```
 
 <a name="Translation.UnmarshalJSON"></a>
-### func \(\*Translation\) [UnmarshalJSON](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L216>)
+### func \(\*Translation\) [UnmarshalJSON](<https://github.com/ClashKingInc/clashy.go/blob/main/misc.go#L230>)
 
 ```go
 func (t *Translation) UnmarshalJSON(data []byte) error
@@ -3138,9 +3314,9 @@ func (t *Translation) UnmarshalJSON(data []byte) error
 UnmarshalJSON stores all language entries and promotes EN into English.
 
 <a name="Troop"></a>
-## type [Troop](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L102-L115>)
+## type [Troop](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L104-L116>)
 
-Troop is a player troop or static troop lookup result.
+Troop is a troop from a player response.
 
 ```go
 type Troop struct {
@@ -3155,12 +3331,11 @@ type Troop struct {
     Village string `json:"village"`
     // SuperTroopIsActive reports whether a super troop boost is active.
     SuperTroopIsActive bool `json:"superTroopIsActive"`
-    StaticUnit
 }
 ```
 
 <a name="Troop.IsBuilderBase"></a>
-### func \(Troop\) [IsBuilderBase](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L121>)
+### func \(Troop\) [IsBuilderBase](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L122>)
 
 ```go
 func (t Troop) IsBuilderBase() bool
@@ -3169,7 +3344,7 @@ func (t Troop) IsBuilderBase() bool
 IsBuilderBase reports whether the troop belongs to Builder Base.
 
 <a name="Troop.IsHomeBase"></a>
-### func \(Troop\) [IsHomeBase](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L118>)
+### func \(Troop\) [IsHomeBase](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L119>)
 
 ```go
 func (t Troop) IsHomeBase() bool
@@ -3178,7 +3353,7 @@ func (t Troop) IsHomeBase() bool
 IsHomeBase reports whether the troop belongs to the home village.
 
 <a name="Troop.IsSuperTroop"></a>
-### func \(Troop\) [IsSuperTroop](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L124>)
+### func \(Troop\) [IsSuperTroop](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L125>)
 
 ```go
 func (t Troop) IsSuperTroop() bool
@@ -3187,16 +3362,16 @@ func (t Troop) IsSuperTroop() bool
 IsSuperTroop reports whether the troop name is one of the known super troops.
 
 <a name="Troop.Static"></a>
-### func \(Troop\) [Static](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L135>)
+### func \(Troop\) [Static](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L136>)
 
 ```go
-func (t Troop) Static(c *Client) *Troop
+func (t Troop) Static(c *Client) *StaticUnit
 ```
 
 Static returns the embedded static\-data record matching this troop's name, village, and level.
 
 <a name="TroopCount"></a>
-## type [TroopCount](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L262-L267>)
+## type [TroopCount](<https://github.com/ClashKingInc/clashy.go/blob/main/game.go#L259-L264>)
 
 TroopCount pairs a troop with a quantity from an army link.
 
@@ -3210,7 +3385,7 @@ type TroopCount struct {
 ```
 
 <a name="VillageType"></a>
-## type [VillageType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L71>)
+## type [VillageType](<https://github.com/ClashKingInc/clashy.go/blob/main/enums.go#L117>)
 
 VillageType identifies the village or game area for static data and units.
 
@@ -3232,7 +3407,7 @@ const (
 ```
 
 <a name="WarAttack"></a>
-## type [WarAttack](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L4-L23>)
+## type [WarAttack](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L4-L17>)
 
 WarAttack is one attack inside a classic war or Clan War League war.
 
@@ -3250,17 +3425,11 @@ type WarAttack struct {
     Destruction float64 `json:"destructionPercentage,omitempty"`
     // Duration is the attack duration in seconds.
     Duration int `json:"duration,omitempty"`
-    // Attacker is optionally linked to the attacker member when a caller enriches
-    // the attack from the war member list.
-    Attacker *ClanWarMember
-    // Defender is optionally linked to the defender member when a caller enriches
-    // the attack from the war member list.
-    Defender *ClanWarMember
 }
 ```
 
 <a name="WarClan"></a>
-## type [WarClan](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L44-L63>)
+## type [WarClan](<https://github.com/ClashKingInc/clashy.go/blob/main/war.go#L38-L57>)
 
 WarClan is one clan side of a classic war or CWL war.
 

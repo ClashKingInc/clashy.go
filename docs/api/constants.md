@@ -36,7 +36,7 @@ BuilderTroopOrder lists Builder Base troops in UI order.
 
 ### `DarkElixirSpellOrder`
 
-<p><code>[]string{"Poison Spell", "Earthquake Spell", "Haste Spell", "Skeleton Spell", "Bat Spell", "Overgrowth Spell", "Ice Block Spell"}</code></p>
+<p><code>[]string{"Poison Spell", "Earthquake Spell", "Haste Spell", "Skeleton Spell", "Bat Spell", "Overgrowth Spell", "Ice Block Spell", "Angry Spell"}</code></p>
 
 DarkElixirSpellOrder lists regular dark elixir spells in UI order.
 
@@ -46,7 +46,7 @@ DarkElixirSpellOrder lists regular dark elixir spells in UI order.
 
 ### `DarkElixirTroopOrder`
 
-<p><code>[]string{"Minion", "Hog Rider", "Valkyrie", "Golem", "Witch", "Lava Hound", "Bowler", "Ice Golem", "Headhunter", "Apprentice Warden", "Druid", "Furnace"}</code></p>
+<p><code>[]string{"Minion", "Hog Rider", "Valkyrie", "Golem", "Witch", "Lava Hound", "Bowler", "Ice Golem", "Headhunter", "Apprentice Warden", "Ruin Witch", "Druid", "Furnace"}</code></p>
 
 DarkElixirTroopOrder lists regular home-village dark elixir troops in UI order.
 
@@ -76,7 +76,7 @@ ElixirTroopOrder lists regular home-village elixir troops in UI order.
 
 ### `EquipmentBaseID`
 
-<p><code>30000000</code></p>
+<p><code>90000000</code></p>
 
 EquipmentBaseID is the base static-data ID offset for hero equipment in army links.
 
@@ -86,9 +86,20 @@ EquipmentBaseID is the base static-data ID offset for hero equipment in army lin
 
 ### `EquipmentOrder`
 
-<p><code>[]string{"Barbarian Puppet", "Rage Vial", "Archer Puppet", "Invisibility Vial", "Eternal Tome", "Life Gem", "Seeking Shield", "Royal Gem", "Earthquake Boots", "Hog Rider Puppet", "Giant Gauntlet", "Vampstache", "Haste Vial", "Rocket Spear", "Spiky Ball", "Frozen Arrow", "Giant Arrow", "Heroic Torch", "Healer Puppet", "Fireball", "Rage Gem", "Snake Bracelet", "Healing Tome", "Dark Crown", "Magic Mirror", "Electro Boots", "Lavaloon Puppet", "Henchmen Puppet", "Dark Orb", "Metal Pants", "Noble Iron", "Action Figure", "Meteor Staff", "Frost Flake", "Stick Horse", "Fire Heart", "Rocket Backpack", "Stun Blaster", "Flame Blower", "Electro Fangs"}</code></p>
+<p><code>[]string{"Barbarian Puppet", "Rage Vial", "Archer Puppet", "Invisibility Vial", "Eternal Tome", "Life Gem", "Seeking Shield", "Royal Gem", "Earthquake Boots", "Hog Rider Puppet", "Giant Gauntlet", "Vampstache", "Haste Vial", "Rocket Spear", "Spiky Ball", "Frozen Arrow", "Monolith Arrow", "Giant Arrow", "Heroic Torch", "Healer Puppet", "Fireball", "Rage Gem", "Snake Bracelet", "Healing Tome", "Dark Crown", "Magic Mirror", "Electro Boots", "Lavaloon Puppet", "Henchmen Puppet", "Dark Orb", "Metal Pants", "Noble Iron", "Action Figure", "Meteor Staff", "Frost Flake", "Stick Horse", "Fire Heart", "Rocket Backpack", "Stun Blaster", "Flame Blower", "Electro Fangs"}</code></p>
 
 EquipmentOrder lists hero equipment in static-data order.
+
+</div>
+
+<div class="api-field" id="errinvalidlimit" markdown="1">
+
+### `ErrInvalidLimit`
+
+<p><code>errors.New("clashy: requests per second must be greater than zero")</code></p>
+
+ErrInvalidLimit is returned when a limiter is created or used without a
+positive requests-per-second limit.
 
 </div>
 
@@ -106,7 +117,7 @@ HVBuildingOrder lists home-village buildings in static-data order.
 
 ### `HeroBaseID`
 
-<p><code>2000000</code></p>
+<p><code>28000000</code></p>
 
 HeroBaseID is the base static-data ID offset for heroes in army links.
 
@@ -156,7 +167,7 @@ HomeTroopOrderWithSieges lists regular home-village troops followed by siege mac
 
 ### `PetBaseID`
 
-<p><code>60000000</code></p>
+<p><code>73000000</code></p>
 
 PetBaseID is the base static-data ID offset for pets in army links.
 
@@ -186,7 +197,7 @@ SeasonalSpellOrder lists temporary seasonal spells in static-data order.
 
 ### `SeasonalTroopOrder`
 
-<p><code>[]string{"Ice Wizard", "Battle Ram", "Royal Ghost", "Pumpkin Barbarian", "Giant Skeleton", "Skeleton Barrel", "M.E.C.H.A", "Party Wizard", "Ram Rider", "Barcher", "Witch Golem", "Hog Wizard", "Lavaloon", "C.O.O.K.I.E", "Firecracker", "Azure Dragon", "Barbarian Kicker", "Giant Thrower", "Broom Witch", "Ice Minion", "Debt Collector", "Snake Barrel", "Giant Giant", "K.A.N.E", "The Disarmer", "YEETer", "YEETer", "The Disarmer", "Meteor Golem"}</code></p>
+<p><code>[]string{"Ice Wizard", "Battle Ram", "Royal Ghost", "Pumpkin Barbarian", "Giant Skeleton", "Skeleton Barrel", "M.E.C.H.A", "Party Wizard", "Ram Rider", "Barcher", "Witch Golem", "Hog Wizard", "Lavaloon", "C.O.O.K.I.E", "Firecracker", "Azure Dragon", "Barbarian Kicker", "Giant Thrower", "Broom Witch", "Ice Minion", "Debt Collector", "Snake Barrel", "Giant Giant", "K.A.N.E", "YEETer", "The Disarmer", "Meteor Golem"}</code></p>
 
 SeasonalTroopOrder lists temporary seasonal troops in static-data order.
 

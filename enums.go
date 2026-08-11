@@ -55,6 +55,52 @@ const (
 	WarResultTie WarResult = "tie"
 )
 
+// BattleType describes the game mode for a player battle log entry.
+type BattleType string
+
+const (
+	// BattleTypeHomeVillage is a home-village battle log entry.
+	BattleTypeHomeVillage BattleType = "HOME_VILLAGE"
+	// BattleTypeRanked is a ranked battle log entry.
+	BattleTypeRanked BattleType = "RANKED"
+	// BattleTypeLegend is a Legend League battle log entry.
+	BattleTypeLegend BattleType = "LEGEND"
+)
+
+// BattleModifier describes the modifier applied to a war battle.
+type BattleModifier string
+
+const (
+	// BattleModifierNone means the war has no battle modifier.
+	BattleModifierNone BattleModifier = "none"
+	// BattleModifierHardMode is the esports hard mode modifier.
+	BattleModifierHardMode BattleModifier = "hardMode"
+	// BattleModifierMinusOne is the Legend I battle modifier.
+	BattleModifierMinusOne BattleModifier = "minusOne"
+	// BattleModifierMinusTwo is the Legend II battle modifier.
+	BattleModifierMinusTwo BattleModifier = "minusTwo"
+	// BattleModifierMinusThree is the Legend III battle modifier.
+	BattleModifierMinusThree BattleModifier = "minusThree"
+)
+
+// InGameName returns a client-facing display name for the battle modifier.
+func (m BattleModifier) InGameName() string {
+	switch m {
+	case "", BattleModifierNone:
+		return "None"
+	case BattleModifierHardMode:
+		return "Hard Mode"
+	case BattleModifierMinusOne:
+		return "Minus One"
+	case BattleModifierMinusTwo:
+		return "Minus Two"
+	case BattleModifierMinusThree:
+		return "Minus Three"
+	default:
+		return string(m)
+	}
+}
+
 // ClanType describes a clan's join policy.
 type ClanType string
 
@@ -78,22 +124,3 @@ const (
 	// VillageClanCapital is Clan Capital.
 	VillageClanCapital VillageType = "clanCapital"
 )
-
-// LoadGameData describes when static game data should be loaded.
-type LoadGameData struct {
-	// Default uses the package's normal embedded static-data behavior.
-	Default bool
-	// StartupOnly indicates static data should be loaded during client
-	// construction only.
-	StartupOnly bool
-	// Always indicates static data should be refreshed whenever supported by the
-	// caller's workflow.
-	Always bool
-	// Never indicates static data should not be loaded.
-	Never bool
-}
-
-// DefaultLoadGameData returns the default static-data loading policy.
-func DefaultLoadGameData() LoadGameData {
-	return LoadGameData{Default: true}
-}

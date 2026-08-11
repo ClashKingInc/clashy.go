@@ -11,47 +11,6 @@ Embedded ClashKing static data, translations, and lookup helpers.
 StaticData is the parsed and indexed ClashKing static data embedded in the
 package.
 
-<div class="api-field" id="staticdata-raw" markdown="1">
-
-### `Raw`
-
-<p><code>map[string][]map[string]any</code></p>
-
-Raw preserves static-data sections exactly as parsed from static_data.json.
-
-</div>
-
-<div class="api-field" id="staticdata-byid" markdown="1">
-
-### `ByID`
-
-<p><code>map[int]map[string]any</code></p>
-
-ByID indexes static-data entries by their numeric _id value.
-
-</div>
-
-<div class="api-field" id="staticdata-byname" markdown="1">
-
-### `ByName`
-
-<p><code>map[string]map[string]any</code></p>
-
-ByName indexes static-data entries by normalized name, section, and
-village.
-
-</div>
-
-<div class="api-field" id="staticdata-translations" markdown="1">
-
-### `Translations`
-
-<p><code>map[string]map[string]string</code></p>
-
-Translations maps translation IDs to language-code/value maps.
-
-</div>
-
 <a id="translation"></a>
 
 ## Translation
@@ -87,6 +46,128 @@ English is the EN translation value.
 <p><code>map[string]string</code></p>
 
 Languages maps language codes to translated strings.
+
+</div>
+
+## Static Data Methods
+
+<a id="staticdata-lookupbyid"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.StaticData.LookupByID(<span class="api-param">id: int</span>)<span class="api-return-arrow"> -> </span><span class="api-return">map[string]any</span></code></p>
+
+LookupByID returns a static-data entry by numeric static ID.
+
+<dl class="api-parameters">
+<dt>Parameters:</dt><dd>
+<p><strong>id</strong> (<code>int</code>)</p>
+</dd>
+</dl>
+
+<dl class="api-parameters">
+<dt>Return type:</dt><dd>
+<code>map[string]any</code> </dd>
+</dl>
+
+</div>
+
+<a id="staticdata-lookupbyname"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.StaticData.LookupByName(<span class="api-param">name: string</span>, <span class="api-param">section: string</span>, <span class="api-param">village: string</span>)<span class="api-return-arrow"> -> </span><span class="api-return">map[string]any</span></code></p>
+
+LookupByName returns a static-data entry by display name, section, and
+village.
+
+The lookup is case-insensitive. The section should match a top-level static
+data section such as "troops", "spells", "heroes", "pets", or "equipment".
+
+<dl class="api-parameters">
+<dt>Parameters:</dt><dd>
+<p><strong>name</strong> (<code>string</code>)</p>
+<p><strong>section</strong> (<code>string</code>)</p>
+<p><strong>village</strong> (<code>string</code>)</p>
+</dd>
+</dl>
+
+<dl class="api-parameters">
+<dt>Return type:</dt><dd>
+<code>map[string]any</code> </dd>
+</dl>
+
+</div>
+
+<a id="staticdata-section"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.StaticData.Section(<span class="api-param">name: string</span>)<span class="api-return-arrow"> -> </span><span class="api-return">[]map[string]any</span></code></p>
+
+Section returns an isolated copy of one top-level static-data section.
+
+<dl class="api-parameters">
+<dt>Parameters:</dt><dd>
+<p><strong>name</strong> (<code>string</code>)</p>
+</dd>
+</dl>
+
+<dl class="api-parameters">
+<dt>Return type:</dt><dd>
+<code>[]map[string]any</code> </dd>
+</dl>
+
+</div>
+
+<a id="staticdata-sections"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.StaticData.Sections()<span class="api-return-arrow"> -> </span><span class="api-return">map[string][]map[string]any</span></code></p>
+
+Sections returns an isolated copy of all top-level static-data sections.
+
+<dl class="api-parameters">
+<dt>Return type:</dt><dd>
+<code>map[string][]map[string]any</code> </dd>
+</dl>
+
+</div>
+
+<a id="staticdata-translation"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.StaticData.Translation(<span class="api-param">id: string</span>)<span class="api-return-arrow"> -> </span><span class="api-return">map[string]string</span></code></p>
+
+Translation returns an isolated language map for one translation ID.
+
+<dl class="api-parameters">
+<dt>Parameters:</dt><dd>
+<p><strong>id</strong> (<code>string</code>)</p>
+</dd>
+</dl>
+
+<dl class="api-parameters">
+<dt>Return type:</dt><dd>
+<code>map[string]string</code> </dd>
+</dl>
+
+</div>
+
+<a id="staticdata-translations"></a>
+
+<div class="api-function" markdown="1">
+
+<p class="api-signature api-function-signature"><code>clashy.StaticData.Translations()<span class="api-return-arrow"> -> </span><span class="api-return">map[string]map[string]string</span></code></p>
+
+Translations returns an isolated copy of all translations.
+
+<dl class="api-parameters">
+<dt>Return type:</dt><dd>
+<code>map[string]map[string]string</code> </dd>
+</dl>
 
 </div>
 
