@@ -1079,7 +1079,7 @@ GetMemberBy returns the first member matching the provided name and trophy filte
 Empty name and zero trophies are treated as wildcards, which is useful when a caller only has one of the two values from an external event.
 
 <a name="ClanCapital"></a>
-## type [ClanCapital](<https://github.com/ClashKingInc/clashy.go/blob/main/clan.go#L54-L58>)
+## type [ClanCapital](<https://github.com/ClashKingInc/clashy.go/blob/main/clan.go#L54-L61>)
 
 ClanCapital describes a clan's capital districts from the clan profile.
 
@@ -1088,6 +1088,9 @@ type ClanCapital struct {
     // Districts contains the visible Clan Capital districts and their hall
     // levels.
     Districts []CapitalDistrict `json:"districts,omitempty"`
+    // ClanGoldSinkTotal is the lifetime Capital Gold deposited into the clan's
+    // Capital.
+    ClanGoldSinkTotal int64 `json:"clanGoldSinkTotal,omitempty"`
 }
 ```
 

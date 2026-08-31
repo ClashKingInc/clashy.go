@@ -509,6 +509,17 @@ levels.
 
 </div>
 
+<div class="api-field" id="clancapital-clangoldsinktotal" markdown="1">
+
+### `ClanGoldSinkTotal`
+
+<p><code>int64</code> <span class="api-json">json: clanGoldSinkTotal</span></p>
+
+ClanGoldSinkTotal is the lifetime Capital Gold deposited into the clan's
+Capital.
+
+</div>
+
 <a id="clantype"></a>
 
 ## Clan Type

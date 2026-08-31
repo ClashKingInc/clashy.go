@@ -55,6 +55,9 @@ type ClanCapital struct {
 	// Districts contains the visible Clan Capital districts and their hall
 	// levels.
 	Districts []CapitalDistrict `json:"districts,omitempty"`
+	// ClanGoldSinkTotal is the lifetime Capital Gold deposited into the clan's
+	// Capital.
+	ClanGoldSinkTotal int64 `json:"clanGoldSinkTotal,omitempty"`
 }
 
 // Clan is the full clan profile returned by GetClan and search endpoints.
