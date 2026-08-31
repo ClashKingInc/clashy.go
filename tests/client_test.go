@@ -12,7 +12,7 @@ import (
 	clashy "github.com/clashkinginc/clashy.go"
 )
 
-const defaultMockAPIBaseURL = "https://api.clashapi.dev"
+const defaultMockAPIBaseURL = "https://mock.clashk.ing"
 
 func newMockAPIClient(t *testing.T) *clashy.Client {
 	t.Helper()
