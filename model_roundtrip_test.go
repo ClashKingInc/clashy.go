@@ -83,3 +83,14 @@ func TestClanDecodesCapitalGoldSinkTotal(t *testing.T) {
 		t.Fatalf("districts = %#v, want nil", clan.ClanCapital.Districts)
 	}
 }
+
+func TestClanEncodesZeroCapitalGoldSinkTotal(t *testing.T) {
+	encoded, err := json.Marshal(Clan{})
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+	const want = `"clanCapital":{"clanGoldSinkTotal":0}`
+	if !bytes.Contains(encoded, []byte(want)) {
+		t.Fatalf("encoded clan = %s, want field %s", encoded, want)
+	}
+}
