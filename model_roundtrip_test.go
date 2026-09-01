@@ -73,13 +73,13 @@ func TestClanWarLeagueClanDecodesMasterRoster(t *testing.T) {
 
 func TestClanDecodesCapitalGoldSinkTotal(t *testing.T) {
 	var clan Clan
-	if err := json.Unmarshal([]byte(`{"tag":"#CLAN","clanCapital":{"districts":[],"clanGoldSinkTotal":9876543210}}`), &clan); err != nil {
+	if err := json.Unmarshal([]byte(`{"tag":"#CLAN","clanCapital":{"clanGoldSinkTotal":9876543210}}`), &clan); err != nil {
 		t.Fatalf("Unmarshal: %v", err)
-	}
-	if clan.ClanCapital == nil {
-		t.Fatal("clan capital = nil")
 	}
 	if got := clan.ClanCapital.ClanGoldSinkTotal; got != 9876543210 {
 		t.Fatalf("clan gold sink total = %d, want 9876543210", got)
+	}
+	if clan.ClanCapital.Districts != nil {
+		t.Fatalf("districts = %#v, want nil", clan.ClanCapital.Districts)
 	}
 }

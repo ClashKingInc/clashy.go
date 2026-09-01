@@ -993,7 +993,7 @@ type ChatLanguage struct {
 ```
 
 <a name="Clan"></a>
-## type [Clan](<https://github.com/ClashKingInc/clashy.go/blob/main/clan.go#L61-L118>)
+## type [Clan](<https://github.com/ClashKingInc/clashy.go/blob/main/clan.go#L61-L119>)
 
 Clan is the full clan profile returned by GetClan and search endpoints.
 
@@ -1052,8 +1052,9 @@ type Clan struct {
     CapitalLeague *League `json:"capitalLeague,omitempty"`
     // ChatLanguage is the clan's preferred chat language.
     ChatLanguage *ChatLanguage `json:"chatLanguage,omitempty"`
-    // ClanCapital contains Clan Capital district information.
-    ClanCapital *ClanCapital `json:"clanCapital,omitempty"`
+    // ClanCapital contains the clan's Capital districts and lifetime deposited
+    // Capital Gold total.
+    ClanCapital ClanCapital `json:"clanCapital"`
     // contains filtered or unexported fields
 }
 ```
@@ -1081,7 +1082,7 @@ Empty name and zero trophies are treated as wildcards, which is useful when a ca
 <a name="ClanCapital"></a>
 ## type [ClanCapital](<https://github.com/ClashKingInc/clashy.go/blob/main/clan.go#L54-L61>)
 
-ClanCapital describes a clan's capital districts from the clan profile.
+ClanCapital describes a clan's Capital data from the clan profile.
 
 ```go
 type ClanCapital struct {

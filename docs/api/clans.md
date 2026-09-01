@@ -275,9 +275,10 @@ ChatLanguage is the clan's preferred chat language.
 
 ### `ClanCapital`
 
-<p><code>*<a href="#clancapital">ClanCapital</a></code> <span class="api-json">json: clanCapital</span></p>
+<p><code><a href="#clancapital">ClanCapital</a></code> <span class="api-json">json: clanCapital</span></p>
 
-ClanCapital contains Clan Capital district information.
+ClanCapital contains the clan's Capital districts and lifetime deposited
+Capital Gold total.
 
 </div>
 
@@ -496,7 +497,7 @@ Badge contains the clan badge image URLs.
 
 <p class="api-signature"><span class="api-kind">struct</span> <code>clashy.ClanCapital</code></p>
 
-ClanCapital describes a clan's capital districts from the clan profile.
+ClanCapital describes a clan's Capital data from the clan profile.
 
 <div class="api-field" id="clancapital-districts" markdown="1">
 
