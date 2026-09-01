@@ -50,11 +50,14 @@ type ClanMember struct {
 	responseMeta
 }
 
-// ClanCapital describes a clan's capital districts from the clan profile.
+// ClanCapital describes a clan's Capital data from the clan profile.
 type ClanCapital struct {
 	// Districts contains the visible Clan Capital districts and their hall
 	// levels.
 	Districts []CapitalDistrict `json:"districts,omitempty"`
+	// ClanGoldSinkTotal is the lifetime Capital Gold deposited into the clan's
+	// Capital.
+	ClanGoldSinkTotal int64 `json:"clanGoldSinkTotal"`
 }
 
 // Clan is the full clan profile returned by GetClan and search endpoints.
@@ -112,8 +115,9 @@ type Clan struct {
 	CapitalLeague *League `json:"capitalLeague,omitempty"`
 	// ChatLanguage is the clan's preferred chat language.
 	ChatLanguage *ChatLanguage `json:"chatLanguage,omitempty"`
-	// ClanCapital contains Clan Capital district information.
-	ClanCapital *ClanCapital `json:"clanCapital,omitempty"`
+	// ClanCapital contains the clan's Capital districts and lifetime deposited
+	// Capital Gold total.
+	ClanCapital ClanCapital `json:"clanCapital"`
 	responseMeta
 }
 

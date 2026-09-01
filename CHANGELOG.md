@@ -2,6 +2,12 @@
 
 All notable changes to this module are documented here.
 
+## v0.1.15
+
+- Added `ClanCapital.ClanGoldSinkTotal` as an `int64` for the lifetime Capital Gold deposited into a clan, including values larger than 32 bits.
+- Changed `Clan.ClanCapital` from a pointer to an always-present value and kept `clanGoldSinkTotal: 0` in encoded JSON. Callers using nil checks or pointer-valued struct literals must update to the value form.
+- Refreshed the embedded static data and translations, including the corrected Laboratory 13 and Town Hall 15 requirements for Angry Spell level 1.
+
 ## v0.1.13
 
 - Updated battle log, ranked player, CWL, and league-group models for the latest Clash of Clans API fields, including typed battle types and battle modifiers.

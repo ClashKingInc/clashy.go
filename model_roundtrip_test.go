@@ -70,3 +70,27 @@ func TestClanWarLeagueClanDecodesMasterRoster(t *testing.T) {
 		t.Fatalf("members = %#v", clan.Members)
 	}
 }
+
+func TestClanDecodesCapitalGoldSinkTotal(t *testing.T) {
+	var clan Clan
+	if err := json.Unmarshal([]byte(`{"tag":"#CLAN","clanCapital":{"clanGoldSinkTotal":9876543210}}`), &clan); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if got := clan.ClanCapital.ClanGoldSinkTotal; got != 9876543210 {
+		t.Fatalf("clan gold sink total = %d, want 9876543210", got)
+	}
+	if clan.ClanCapital.Districts != nil {
+		t.Fatalf("districts = %#v, want nil", clan.ClanCapital.Districts)
+	}
+}
+
+func TestClanEncodesZeroCapitalGoldSinkTotal(t *testing.T) {
+	encoded, err := json.Marshal(Clan{})
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+	const want = `"clanCapital":{"clanGoldSinkTotal":0}`
+	if !bytes.Contains(encoded, []byte(want)) {
+		t.Fatalf("encoded clan = %s, want field %s", encoded, want)
+	}
+}
