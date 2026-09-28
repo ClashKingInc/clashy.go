@@ -119,6 +119,7 @@ var (
 		"YEETer",
 		"Meteor Golem",
 		"Elephant Rider",
+		"Yeti Undertaker",
 	}
 	// BuilderTroopOrder lists Builder Base troops in UI order.
 	BuilderTroopOrder = []string{
