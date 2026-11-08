@@ -1,5 +1,7 @@
 package clashy
 
+import "time"
+
 // WarAttack is one attack inside a classic war or Clan War League war.
 type WarAttack struct {
 	// Order is the attack order assigned by the API.
@@ -66,6 +68,9 @@ type ClanWar struct {
 	State WarState `json:"state,omitempty"`
 	// TeamSize is the roster size for each side.
 	TeamSize int `json:"teamSize,omitempty"`
+	// AttacksPerMember is the reported allowance, or zero when absent.
+	// CWL may omit this field; use AttackLimit for the effective allowance.
+	AttacksPerMember int `json:"attacksPerMember,omitempty"`
 	// PreparationStartTime is when preparation day began.
 	PreparationStartTime *Timestamp `json:"preparationStartTime,omitempty"`
 	// StartTime is when battle day starts.
@@ -88,12 +93,54 @@ type ClanWar struct {
 	responseMeta
 }
 
-// Type returns "cwl" when the war has a CWL war tag and "random" otherwise.
+// Type distinguishes league, friendly, and regular wars.
 func (w *ClanWar) Type() string {
-	if w == nil || w.WarTag == "" {
-		return "random"
+	if w != nil {
+		if w.WarTag != "" {
+			return "cwl"
+		}
+		if w.PreparationStartTime != nil && w.StartTime != nil && w.EndTime != nil &&
+			IsFriendlyWarWindow(w.PreparationStartTime.Time, w.StartTime.Time, w.EndTime.Time) {
+			return "friendly"
+		}
 	}
-	return "cwl"
+	return "random"
+}
+
+// ResolveWarAttackLimit returns zero when a non-CWL allowance is unknown.
+// Never infer the limit from attacks used: an entire roster can miss a hit.
+func ResolveWarAttackLimit(warType string, reported int) int {
+	if warType == "cwl" {
+		return 1
+	}
+	if reported > 0 {
+		return reported
+	}
+	return 0
+}
+
+// AttackLimit accounts for CWL responses that omit attacksPerMember.
+func (w *ClanWar) AttackLimit() int {
+	if w == nil {
+		return 0
+	}
+	return ResolveWarAttackLimit(w.Type(), w.AttacksPerMember)
+}
+
+// IsFriendlyWarWindow recognizes the game's selectable friendly preparation
+// windows and shortened battle days. Regular preparation is 23 hours.
+func IsFriendlyWarWindow(prep, start, end time.Time) bool {
+	if start.IsZero() || end.IsZero() {
+		return false
+	}
+	if end.After(start) && end.Sub(start) < 24*time.Hour {
+		return true
+	}
+	switch start.Sub(prep) {
+	case 5 * time.Minute, 15 * time.Minute, 30 * time.Minute, time.Hour, 2 * time.Hour, 4 * time.Hour, 6 * time.Hour, 8 * time.Hour, 12 * time.Hour, 16 * time.Hour, 20 * time.Hour, 24 * time.Hour:
+		return true
+	}
+	return false
 }
 
 // Attacks returns all attacks made by both sides of the war.
@@ -160,6 +207,8 @@ type ClanWarLogEntry struct {
 	EndTime *Timestamp `json:"endTime,omitempty"`
 	// TeamSize is the roster size for each side.
 	TeamSize int `json:"teamSize,omitempty"`
+	// AttacksPerMember preserves the reported allowance for friendly wars.
+	AttacksPerMember int `json:"attacksPerMember,omitempty"`
 	// Clan is the requested clan side.
 	Clan *WarClan `json:"clan,omitempty"`
 	// Opponent is the opposing clan side.

@@ -29,7 +29,8 @@ type RankedPlayer struct {
 }
 
 type responseMeta struct {
-	ResponseRetry int
+	// Cache lifetime belongs to transport metadata, not the game snapshot.
+	ResponseRetry int `json:"-"`
 }
 
 // RetryAfter returns the number of seconds the API says this response can be
