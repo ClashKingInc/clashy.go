@@ -179,7 +179,7 @@ func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, o
 		reason := apiErr.Reason
 		path, _ := url.Parse(fullURL)
 		warRoute := path != nil && strings.Contains(path.Path, "/clans/") && (strings.HasSuffix(path.Path, "/warlog") || strings.HasSuffix(path.Path, "/currentwar"))
-		if warRoute && (reason == "accessDenied" || reason == "accessDenied.privateWarLog") {
+		if warRoute && (reason == "accessDenied.privateWarLog" || reason == "accessDenied" && strings.Contains(strings.ToLower(apiErr.Message), "private") && strings.Contains(strings.ToLower(apiErr.Message), "war log")) {
 			return result, &PrivateWarLog{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
 		}
 		return result, &Forbidden{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}

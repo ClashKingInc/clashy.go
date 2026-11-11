@@ -31,7 +31,7 @@ func main() {
 	for _, test := range []struct {
 		scenario string
 		private  bool
-	}{{"forbidden", true}, {"invalidIp", false}} {
+	}{{"privateWarLog", true}, {"forbidden", false}, {"invalidIp", false}} {
 		_, err := client.Do(context.Background(), "GET", base+"/clans/%232PP/warlog?scenario="+test.scenario, nil, clashy.RequestOptions{})
 		var private *clashy.PrivateWarLog
 		var forbidden *clashy.Forbidden
