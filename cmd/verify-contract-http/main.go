@@ -39,5 +39,24 @@ func main() {
 			panic(fmt.Sprintf("%s: %T", test.scenario, err))
 		}
 	}
+	cfg := clashy.DefaultClientConfig()
+	cfg.BaseURL = base
+	cfg.LookupCache = false
+	cfg.UpdateCache = false
+	full, err := clashy.NewClient(cfg)
+	if err != nil {
+		panic(err)
+	}
+	if err = full.LoginWithTokens(context.Background(), "disposable"); err != nil {
+		panic(err)
+	}
+	clan, err := full.GetClan(context.Background(), "#2PP")
+	if err != nil || clan.Name == "" {
+		panic(fmt.Sprintf("real clan decode: %v", err))
+	}
+	found, err := full.SearchClans(context.Background(), clashy.SearchClansRequest{Name: "test", Limit: 3})
+	if err != nil || len(found) == 0 {
+		panic(fmt.Sprintf("real search decode: %v", err))
+	}
 	fmt.Println("PASS real Go SDK: maintenance/outage and private-war/credential failures remain distinct")
 }

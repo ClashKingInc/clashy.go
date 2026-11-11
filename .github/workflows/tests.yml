@@ -1,24 +1,38 @@
-name: clashy.go Tests
-
+name: clashy.go local service verification
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
-
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-
-      - name: Run tests
-        run: go test ./...
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+      - uses: actions/checkout@v4
+        with:
+          repository: ClashKingInc/ClashTestingAPI
+          ref: 3e1a1cf52906dcd5a5f57834baec5d5e85c98428
+          path: .ci-mock
+          persist-credentials: false
+      - run: go build ./...
+      - run: mkdir -p .ci-tools && go build -o .ci-tools/verify-contract-http ./cmd/verify-contract-http
+      - run: npm ci --ignore-scripts --prefix .ci-mock
+      - run: npm run build --prefix .ci-mock
+      - name: Verify actual SDK through the local Mock API Worker
+        working-directory: .ci-mock
+        env:
+          CLASH_CONTRACT_GO_BINARY: ${{ github.workspace }}/.ci-tools/verify-contract-http
+          CLASH_CONTRACT_GO_REPO: ${{ github.workspace }}
+        run: node --import tsx scripts/verify-native-consumers.ts
