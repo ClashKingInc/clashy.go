@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -176,14 +177,20 @@ func (h *HTTPClient) Do(ctx context.Context, method, fullURL string, body any, o
 		return result, &InvalidArgument{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
 	case 403:
 		reason := apiErr.Reason
-		if strings.EqualFold(reason, "accessDenied.privateWarLog") {
+		path, _ := url.Parse(fullURL)
+		warRoute := path != nil && strings.Contains(path.Path, "/clans/") && (strings.HasSuffix(path.Path, "/warlog") || strings.HasSuffix(path.Path, "/currentwar"))
+		if warRoute && (reason == "accessDenied.privateWarLog" || reason == "accessDenied" && strings.Contains(strings.ToLower(apiErr.Message), "private") && strings.Contains(strings.ToLower(apiErr.Message), "war log")) {
 			return result, &PrivateWarLog{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
 		}
 		return result, &Forbidden{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
 	case 404:
 		return result, &NotFound{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
 	case 503:
-		return result, &Maintenance{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
+		// Only a declared game-maintenance reason may produce Maintenance.
+		if strings.EqualFold(strings.TrimSpace(apiErr.Reason), "maintenance") || strings.EqualFold(strings.TrimSpace(apiErr.Reason), "inMaintenance") {
+			return result, &Maintenance{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
+		}
+		return result, &GatewayError{newHTTPException(resp.StatusCode, apiErr.Reason, apiErr.Message, responseBody)}
 	case 500, 502, 504:
 		return result, &GatewayError{newHTTPException(resp.StatusCode, "Gateway Error", string(responseBody), responseBody)}
 	default:
