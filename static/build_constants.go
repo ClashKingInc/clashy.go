@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
 	"os"
 	"path/filepath"
 	"sort"
@@ -63,6 +64,7 @@ func main() {
 	})
 
 	lists := []constantList{
+		{"SquadOrder", names(filter(troops, func(t item) bool { return stringValue(t, "production_building") == "Squad Barracks" }))},
 		{"ElixirTroopOrder", names(filter(troops, func(t item) bool {
 			return stringValue(t, "production_building") == "Barracks" && !boolValue(t, "is_seasonal") && !hasKey(t, "super_troop")
 		}))},
@@ -127,6 +129,14 @@ func main() {
 }
 
 func downloadStaticFiles(ctx context.Context) ([]byte, []byte, error) {
+	if root := os.Getenv("CLASHY_ASSETS_DIR"); root != "" {
+		data, err := os.ReadFile(filepath.Join(root, "static_data.json"))
+		if err != nil {
+			return nil, nil, err
+		}
+		translations, err := os.ReadFile(filepath.Join(root, "translations.json"))
+		return data, translations, err
+	}
 	client := &http.Client{Timeout: 30 * time.Second}
 	staticData, err := downloadJSON(ctx, client, staticDataURL)
 	if err != nil {

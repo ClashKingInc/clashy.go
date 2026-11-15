@@ -56,6 +56,21 @@ func parseStaticData(staticBytes, translationBytes []byte) (*StaticData, error) 
 	}
 	for section, items := range raw {
 		for _, item := range items {
+			// Variants are nested under building levels but account exports refer to their IDs.
+			if section == "buildings" {
+				if levels, ok := item["levels"].([]any); ok {
+					for _, rawLevel := range levels {
+						level, _ := rawLevel.(map[string]any)
+						variants, _ := level["variants"].([]any)
+						for _, rawVariant := range variants {
+							variant, _ := rawVariant.(map[string]any)
+							if id, ok := asInt(variant["_id"]); ok {
+								s.byID[id] = variant
+							}
+						}
+					}
+				}
+			}
 			id, ok := asInt(item["_id"])
 			if ok {
 				s.byID[id] = item

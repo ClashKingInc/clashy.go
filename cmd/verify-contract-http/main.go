@@ -15,6 +15,10 @@ func main() {
 	if len(base) < 17 || base[:17] != "http://127.0.0.1:" {
 		panic("owned loopback Mock API required")
 	}
+	static, loadErr := clashy.LoadStaticData()
+	if loadErr != nil || len(static.Section("emotes")) != 20 || len(static.Section("star_bonus")) != 19 || static.LookupByID(119000000) == nil {
+		panic("TH19 asset catalog failed to load")
+	}
 	client := clashy.NewHTTPClient(clashy.ClientConfig{Timeout: 5 * time.Second, ThrottleLimit: 100})
 	client.SetTokens("disposable")
 	for _, c := range []struct {
