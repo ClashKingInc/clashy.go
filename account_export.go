@@ -15,6 +15,10 @@ func (t Troop) IsSquad(c *Client) bool {
 	if c == nil {
 		return false
 	}
-	item := c.StaticData().LookupByName(t.Name, "troops", t.Village)
+	village := t.Village
+	if t.IsHomeBase() {
+		village = "home"
+	}
+	item := c.StaticData().LookupByName(t.Name, "troops", village)
 	return item != nil && item["production_building"] == "Squad Barracks"
 }

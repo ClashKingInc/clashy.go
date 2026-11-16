@@ -2,6 +2,14 @@
 
 All notable changes to this module are documented here.
 
+## v0.1.20
+
+- Refreshed embedded static data, translations, and generated constants for Town Hall 19 and the Assets 2.5 export, including squad troops, emotes, and star bonuses.
+- Indexed building variants nested under building levels so `StaticData.LookupByID` can resolve their stable IDs.
+- Added `AccountExport` for in-game export identity and optional emote/building-variant ownership IDs. These fields do not identify the currently selected Town Hall variant.
+- Added `Troop.IsSquad` using the Squad Barracks production-building metadata.
+- Synchronized localized emote set labels and corrected squad/variant metadata in the bundled catalog.
+
 ## v0.1.15
 
 - Added `ClanCapital.ClanGoldSinkTotal` as an `int64` for the lifetime Capital Gold deposited into a clan, including values larger than 32 bits.

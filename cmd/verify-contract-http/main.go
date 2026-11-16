@@ -62,5 +62,8 @@ func main() {
 	if err != nil || len(found) == 0 {
 		panic(fmt.Sprintf("real search decode: %v", err))
 	}
+	if !(clashy.Troop{Name: "Barch Squad"}).IsSquad(full) || !(clashy.Troop{Name: "Barch Squad", Village: "home"}).IsSquad(full) {
+		panic("omitted village must resolve home-village squads")
+	}
 	fmt.Println("PASS real Go SDK: maintenance/outage and private-war/credential failures remain distinct")
 }

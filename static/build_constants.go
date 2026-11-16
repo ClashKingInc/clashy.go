@@ -129,23 +129,24 @@ func main() {
 }
 
 func downloadStaticFiles(ctx context.Context) ([]byte, []byte, error) {
+	var staticData, translations []byte
+	var err error
 	if root := os.Getenv("CLASHY_ASSETS_DIR"); root != "" {
-		data, err := os.ReadFile(filepath.Join(root, "static_data.json"))
-		if err != nil {
-			return nil, nil, err
+		staticData, err = os.ReadFile(filepath.Join(root, "static_data.json"))
+		if err == nil {
+			translations, err = os.ReadFile(filepath.Join(root, "translations.json"))
 		}
-		translations, err := os.ReadFile(filepath.Join(root, "translations.json"))
-		return data, translations, err
+	} else {
+		client := &http.Client{Timeout: 30 * time.Second}
+		staticData, err = downloadJSON(ctx, client, staticDataURL)
+		if err == nil {
+			translations, err = downloadJSON(ctx, client, translationsURL)
+		}
 	}
-	client := &http.Client{Timeout: 30 * time.Second}
-	staticData, err := downloadJSON(ctx, client, staticDataURL)
 	if err != nil {
 		return nil, nil, err
 	}
-	translations, err := downloadJSON(ctx, client, translationsURL)
-	if err != nil {
-		return nil, nil, err
-	}
+	// Local inputs must satisfy the same schema checks as downloaded inputs.
 	var staticPayload map[string]json.RawMessage
 	if err := json.Unmarshal(staticData, &staticPayload); err != nil {
 		return nil, nil, fmt.Errorf("validate static data: %w", err)
