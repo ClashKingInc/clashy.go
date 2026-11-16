@@ -15,6 +15,10 @@ func main() {
 	if len(base) < 17 || base[:17] != "http://127.0.0.1:" {
 		panic("owned loopback Mock API required")
 	}
+	static, loadErr := clashy.LoadStaticData()
+	if loadErr != nil || len(static.Section("emotes")) != 20 || len(static.Section("star_bonus")) != 19 || static.LookupByID(119000000) == nil {
+		panic("TH19 asset catalog failed to load")
+	}
 	client := clashy.NewHTTPClient(clashy.ClientConfig{Timeout: 5 * time.Second, ThrottleLimit: 100})
 	client.SetTokens("disposable")
 	for _, c := range []struct {
@@ -57,6 +61,9 @@ func main() {
 	found, err := full.SearchClans(context.Background(), clashy.SearchClansRequest{Name: "test", Limit: 3})
 	if err != nil || len(found) == 0 {
 		panic(fmt.Sprintf("real search decode: %v", err))
+	}
+	if !(clashy.Troop{Name: "Barch Squad"}).IsSquad(full) || !(clashy.Troop{Name: "Barch Squad", Village: "home"}).IsSquad(full) {
+		panic("omitted village must resolve home-village squads")
 	}
 	fmt.Println("PASS real Go SDK: maintenance/outage and private-war/credential failures remain distinct")
 }

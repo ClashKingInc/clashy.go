@@ -15,6 +15,21 @@ var (
 	PetBaseID = 73000000
 	// EquipmentBaseID is the base static-data ID offset for hero equipment in army links.
 	EquipmentBaseID = 90000000
+	// SquadOrder is generated from ClashKing static data.
+	SquadOrder = []string{
+		"Barch Squad",
+		"Giant Wizard Squad",
+		"Wall Breaker Squad",
+		"Minion Squad",
+		"Balloon Squad",
+		"Golem Witch Squad",
+		"Hog Rider Squad",
+		"Miner Squad",
+		"Healer Squad",
+		"P.E.K.K.A Titan Squad",
+		"Dragons Squad",
+		"Baby Dragon Squad",
+	}
 	// ElixirTroopOrder lists regular home-village elixir troops in UI order.
 	ElixirTroopOrder = []string{
 		"Barbarian",
@@ -149,6 +164,7 @@ var (
 		"Recall Spell",
 		"Revive Spell",
 		"Totem Spell",
+		"Heroic Spell",
 	}
 	// DarkElixirSpellOrder lists regular dark elixir spells in UI order.
 	DarkElixirSpellOrder = []string{
@@ -291,6 +307,10 @@ var (
 		"Helper Hut",
 		"Crafting Station",
 		"Super Wizard Tower",
+		"Guardian Shrine",
+		"Squad Barracks",
+		"Spiky Tower",
+		"Firecracker Tower",
 	}
 	// AchievementOrder lists achievements in village and UI-priority order.
 	AchievementOrder = []string{

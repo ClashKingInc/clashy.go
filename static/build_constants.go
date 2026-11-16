@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
 	"os"
 	"path/filepath"
 	"sort"
@@ -63,6 +64,7 @@ func main() {
 	})
 
 	lists := []constantList{
+		{"SquadOrder", names(filter(troops, func(t item) bool { return stringValue(t, "production_building") == "Squad Barracks" }))},
 		{"ElixirTroopOrder", names(filter(troops, func(t item) bool {
 			return stringValue(t, "production_building") == "Barracks" && !boolValue(t, "is_seasonal") && !hasKey(t, "super_troop")
 		}))},
@@ -127,15 +129,24 @@ func main() {
 }
 
 func downloadStaticFiles(ctx context.Context) ([]byte, []byte, error) {
-	client := &http.Client{Timeout: 30 * time.Second}
-	staticData, err := downloadJSON(ctx, client, staticDataURL)
+	var staticData, translations []byte
+	var err error
+	if root := os.Getenv("CLASHY_ASSETS_DIR"); root != "" {
+		staticData, err = os.ReadFile(filepath.Join(root, "static_data.json"))
+		if err == nil {
+			translations, err = os.ReadFile(filepath.Join(root, "translations.json"))
+		}
+	} else {
+		client := &http.Client{Timeout: 30 * time.Second}
+		staticData, err = downloadJSON(ctx, client, staticDataURL)
+		if err == nil {
+			translations, err = downloadJSON(ctx, client, translationsURL)
+		}
+	}
 	if err != nil {
 		return nil, nil, err
 	}
-	translations, err := downloadJSON(ctx, client, translationsURL)
-	if err != nil {
-		return nil, nil, err
-	}
+	// Local inputs must satisfy the same schema checks as downloaded inputs.
 	var staticPayload map[string]json.RawMessage
 	if err := json.Unmarshal(staticData, &staticPayload); err != nil {
 		return nil, nil, fmt.Errorf("validate static data: %w", err)
